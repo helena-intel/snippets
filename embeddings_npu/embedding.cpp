@@ -3,6 +3,11 @@
 #include <filesystem>
 
 int main(int argc, char* argv[]) {
+
+   if (3 != argc) {
+       throw std::runtime_error(std::string{"Usage: "} + argv[0] + " <MODEL_DIR> <DEVICE>");
+   }
+
    std::string dirname = argv[1];
    std::string device = argv[2];
    std::filesystem::path dir_path(dirname);
@@ -10,7 +15,7 @@ int main(int argc, char* argv[]) {
    std::filesystem::path tokenizer_xml = dir_path / "openvino_tokenizer.xml";
 
    ov::Core core;
-   // use "openvino_tokenizers.dll" on Windows, "libopenvino_tokenizers.so" on Linux, "libopenvino_tokenizers.dylib" on macOS
+   // Windows: "openvino_tokenizers.dll", Linux: "libopenvino_tokenizers.so" MacOS: "libopenvino_tokenizers.dylib"
    #if defined(_WIN32) || defined(_WIN64)
        core.add_extension("openvino_tokenizers.dll");
    #elif defined(__linux__)

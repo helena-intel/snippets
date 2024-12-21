@@ -6,59 +6,42 @@ This is a very basic example of running embedding models with OpenVINO on NPU. T
 
 - For model conversion and reshaping: `pip install optimum[openvino]`
 - For Python inference: `pip install openvino openvino-tokenizers`
-- For C++ inference: OpenVINO GenAI archive recommended, e.g. https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/2024.6/windows 
+- For C++ inference: OpenVINO GenAI archive recommended, e.g. https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/2024.6/windows
 
 Even though we do not use OpenVINO GenAI, the GenAI archive includes openvino-tokenizers, so using that archive is the easiest way to get started with development.
 
 ## Convert the model to OpenVINO
 
-We describe two methods to convert the model:
+The convert.py script uses the
+[optimum-intel](https://github.com/huggingface/optimum-intel) API to convert
+the embedding model to OpenVINO, reshapes it to the provided shape, and adds
+normalization to the model.
 
-1. A step-by-step method, converting the model with optimum-cli, then reshaping, then adding normalization
-2. An all-in-one script that converts, reshapes and normalizes the model
+NPU only supports static shapes, so static shapes are required. By default we
+reshape to 384, change SIZE in the convert.py script to change this. We also
+configure the tokenizer to pad tokens to this shape.
 
-### Step by step model conversion
+Using OpenVINO's [preprocessing
+API](https://docs.openvino.ai/2024/openvino-workflow/running-inference/optimize-inference/optimize-preprocessing.html),
+we can embed L2 normalization in the model. This is not required, but it is
+very useful; we do not have to add a normalization function to the inference
+script, and normalization is done as part of inference, also running on NPU.
 
+This script stores the static model with normalization in {model_name}-static-norm.
 
-#### Convert the model to OpenVINO:
-
-```sh
-optimum-cli export openvino -m BAAI/bge-small-en-v1.5 --weight-format fp16 --task feature-extraction bge-small-en-ov
-```
-
-#### Reshape the model and tokenizer to static shapes
-
-NPU only supports static shapes. We reshape the model to a particular shape (in this case 128) and configure the tokenizer to pad
-tokens to this shape. This scripts stores the static model in bge-small-en-ov-static.
-
-```sh
-python reshape.py bge-small-en-ov
-```
-
-#### Add L2 normalization to the model
-
-This step is optional, but very useful. Using OpenVINO's [preprocessing API](https://docs.openvino.ai/2024/openvino-workflow/running-inference/optimize-inference/optimize-preprocessing.html), we can embed L2 normalization in the model, so we do not have to add a normalization function to the inference script. This script stores the static model with normalization
-in bge-small-en-ov-static-norm
-
-```
-python add_normalization.py bge-small-en-ov-static
-```
-
-### Convert, reshape and normalize at once
-
-This script uses the optimum-intel API to convert and reshape the model.
+To run the script, run convert.py with the model_id as argument. Feature
+extraction models from the Hugging Face hub are supported by optimum-intel. Not
+every model may work well on NPU. BERT models and derivates are expected to work
+well and have been validated, and experimentally BAAI/bge works well too. For example:
 
 ```sh
-python convert.py "BAAI/bge-small-en-v1.5" 
+python convert.py "BAAI/bge-small-en-v1.5"
 ```
-
 
 ## Run Python inference
 
-Run the embedding.py script with the path to the static model and the device as arguments. CPU, GPU and NPU are supported.
-
-> [!NOTE] 
-> If you did not add normalization to the model, modify the path to the model in the line below
+Run the embedding.py script with the path to the static model and the device as
+arguments. CPU, GPU and NPU are supported.
 
 ```sh
 python embedding.py bge-small-en-ov-static-norm NPU
@@ -66,7 +49,8 @@ python embedding.py bge-small-en-ov-static-norm NPU
 
 ## Build C++ app and run inference
 
-In a terminal where you ran setupvars.bat or setupvars.ps1 from an extracted OpenVINO GenAI archive (see prerequisites):
+In a terminal where you ran setupvars.bat or setupvars.ps1 from an extracted
+OpenVINO GenAI archive (see prerequisites):
 
 ```sh
 mkdir build
@@ -75,13 +59,13 @@ cmake ..
 cmake --build . --config Release
 ```
 
-On Windows:
+Run inference on Windows:
 
 ```
 Release\embedding.exe \path\to\model NPU
 ```
 
-On Linux:
+Run inference on Linux:
 
 ```
 ./embedding /path/to/model NPU
