@@ -71,3 +71,16 @@ Run inference on Linux:
 ```
 ./embedding /path/to/model NPU
 ```
+
+## Notes
+
+This script was tested on NPU on Ubuntu 24.10 with NPU driver 1.10.1 with the following models:
+
+-    "BAAI/bge-small-en-v1.5",
+-    "google-bert/bert-base-uncased",
+-    "distilbert/distilbert-base-uncased",
+-    "jinaai/jina-embeddings-v2-small-en",
+-    "FacebookAI/roberta-base",
+
+A quick test was done to check that the first couple of model outputs are close to that of the PyTorch source model, but no full validation. Use at your own risk.
+
