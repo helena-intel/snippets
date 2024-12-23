@@ -39,6 +39,9 @@ well and have been validated, and experimentally BAAI/bge works well too. For ex
 python convert.py "BAAI/bge-small-en-v1.5"
 ```
 
+> [!NOTE]
+> For models that need remote code to be executed, add `--trust-remote-code` to `python convert.py` 
+
 ## Run Python inference
 
 Run the embedding.py script with the path to the static model and the device as
@@ -79,7 +82,7 @@ This script was tested on NPU on Ubuntu 24.10 with NPU driver 1.10.1 with the fo
 -    "BAAI/bge-small-en-v1.5",
 -    "google-bert/bert-base-uncased",
 -    "distilbert/distilbert-base-uncased",
--    "jinaai/jina-embeddings-v2-small-en",
+-    "jinaai/jina-embeddings-v2-small-en" with `--trust-remote-code`, 
 -    "FacebookAI/roberta-base",
 
 A quick test was done to check that the first couple of model outputs are close to that of the PyTorch source model, but no full validation. Use at your own risk.
