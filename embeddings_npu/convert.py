@@ -14,6 +14,9 @@ BATCH_SIZE = 1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model_id")
+parser.add_argument("--trust-remote-code", action="store_true", help="Trust remote code")
+args = parser.parse_args()
+
 args = parser.parse_args()
 
 new_model_dir = Path(args.model_id).name + "-static-norm"
@@ -27,11 +30,11 @@ def normalize(output: ov.runtime.Output):
 
 
 # ### Export and reshape the model
-model = OVModelForFeatureExtraction.from_pretrained(args.model_id, export=True, compile=False)
+model = OVModelForFeatureExtraction.from_pretrained(args.model_id, export=True, compile=False, trust_remote_code=args.trust_remote_code)
 model.reshape(BATCH_SIZE, INPUT_SIZE)
 
 # ### Convert tokenizer and add max padding
-hf_tokenizer = AutoTokenizer.from_pretrained(args.model_id)
+hf_tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=args.trust_remote_code)
 hf_tokenizer.model_max_length = INPUT_SIZE
 ov_tokenizer = convert_tokenizer(hf_tokenizer, use_max_padding=True)
 
