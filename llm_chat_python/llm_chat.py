@@ -47,7 +47,7 @@ def main():
     config.repetition_penalty = 1.1
 
     # warmup inference for GPU reproducibility
-    pipe.generate("hello", max_new_tokens=5)
+    pipe.generate("hello", max_new_tokens=5, do_sample=False)
 
     pipe.start_chat(system_message=start_message)
     while True:
