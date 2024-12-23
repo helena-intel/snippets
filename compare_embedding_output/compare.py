@@ -17,7 +17,11 @@ pt_model_id = "BAAI/bge-small-en-v1.5"
 ov_model_id = "bge-small-en-v1.5-static"
 ov_model_id_norm = "bge-small-en-v1.5-static-norm"
 
-SIZE = 384  # padding size, should be same as ov_model size if static models are used.
+SIZE = 128 # padding size, should be same as ov_model size if static models are used.
+
+# If model is exported with fixed batch size, sentences should be same length as batch size
+sentences = ["Hello world!", ]
+# sentences = ["Hello world!", "OpenVINO prepreprocessing is very cool!"]
 
 import numpy as np
 import openvino as ov
@@ -26,7 +30,6 @@ from optimum.intel import OVModelForFeatureExtraction
 from transformers import AutoModel, AutoTokenizer
 import openvino_tokenizers
 
-sentences = ["Hello world!", "OpenVINO prepreprocessing is very cool!"]
 
 tokenizer = AutoTokenizer.from_pretrained(pt_model_id)
 encoded_input = tokenizer(sentences, padding="max_length", max_length=SIZE, truncation=True, return_tensors="pt")

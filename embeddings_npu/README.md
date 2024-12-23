@@ -18,8 +18,9 @@ the embedding model to OpenVINO, reshapes it to the provided shape, and adds
 normalization to the model.
 
 NPU only supports static shapes, so static shapes are required. By default we
-reshape to 384, change SIZE in the convert.py script to change this. We also
-configure the tokenizer to pad tokens to this shape.
+reshape to a batch size of 1, sequence length of 128. Change BATCH_SIZE and
+INPUT_SIZE in the convert.py script to change this. We also configure the
+tokenizer to pad tokens to the INPUT_SIZE.
 
 Using OpenVINO's [preprocessing
 API](https://docs.openvino.ai/2024/openvino-workflow/running-inference/optimize-inference/optimize-preprocessing.html),

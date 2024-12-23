@@ -9,7 +9,8 @@ from openvino_tokenizers import convert_tokenizer
 from optimum.intel import OVModelForFeatureExtraction
 from transformers import AutoTokenizer
 
-SIZE = 384
+INPUT_SIZE = 128
+BATCH_SIZE = 1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model_id")
@@ -20,23 +21,23 @@ new_model_file = Path(new_model_dir) / "openvino_model.xml"
 
 @custom_preprocess_function
 def normalize(output: ov.runtime.Output):
-    output = op.slice(output, [0,], [1], [1,], [1])
-    output = op.squeeze(output, axes=[1,])
+    # stridedslice is supported on NPU, slice+squeeze is not
+    output = op.strided_slice(output, begin=[0,0,0], end=[0,1,0], strides=[1,1,1], begin_mask=[1,0,0], end_mask=[1,0,1], shrink_axis_mask=[0,1,0])
     return op.normalize_l2(output, 1, 1e-12, "max")
 
 
 # ### Export and reshape the model
 model = OVModelForFeatureExtraction.from_pretrained(args.model_id, export=True, compile=False)
-model.reshape(-1, SIZE)
+model.reshape(BATCH_SIZE, INPUT_SIZE)
 
 # ### Convert tokenizer and add max padding
 hf_tokenizer = AutoTokenizer.from_pretrained(args.model_id)
-hf_tokenizer.model_max_length = SIZE
+hf_tokenizer.model_max_length = INPUT_SIZE
 ov_tokenizer = convert_tokenizer(hf_tokenizer, use_max_padding=True)
 
 # doublecheck that tokenizer padding was added correctly
 for output in ov_tokenizer.outputs:
-    assert output.partial_shape[-1] == SIZE
+    assert output.partial_shape[-1] == INPUT_SIZE
 
 ov.save_model(ov_tokenizer, Path(new_model_dir) / "openvino_tokenizer.xml")
 
