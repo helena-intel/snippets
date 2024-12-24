@@ -33,6 +33,10 @@ def normalize(output: ov.runtime.Output):
 model = OVModelForFeatureExtraction.from_pretrained(args.model_id, export=True, compile=False, trust_remote_code=args.trust_remote_code)
 model.reshape(BATCH_SIZE, INPUT_SIZE)
 
+# set_layout enables using ov.set_batch() during inference to easily change the batch size of the model in runtime
+for param in model.model.get_parameters():
+    param.set_layout(ov.Layout("N..."))
+
 # ### Convert tokenizer and add max padding
 hf_tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=args.trust_remote_code)
 hf_tokenizer.model_max_length = INPUT_SIZE
@@ -44,7 +48,7 @@ for output in ov_tokenizer.outputs:
 
 ov.save_model(ov_tokenizer, Path(new_model_dir) / "openvino_tokenizer.xml")
 
-# Optional: uncomment the lines below to save the model without normalization
+# Optional: save the model without normalization
 new_model_dir_nonorm = Path(args.model_id).name + "-static"
 model.save_pretrained(new_model_dir_nonorm)
 ov.save_model(ov_tokenizer, Path(new_model_dir_nonorm) / "openvino_tokenizer.xml")

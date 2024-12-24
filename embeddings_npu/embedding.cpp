@@ -22,28 +22,38 @@ int main(int argc, char* argv[]) {
        core.add_extension("libopenvino_tokenizers.so");
    #endif
 
-   ov::InferRequest tokenizer_request = core.compile_model(tokenizer_xml, "CPU").create_infer_request();
+   std::vector<std::string> prompts = {"Hello world!", "OpenVINO is great", "Hello"};
+   std::size_t batch_size = prompts.size();
 
-   std::string prompt="Hello world!";
-   tokenizer_request.set_input_tensor(ov::Tensor{ov::element::string, {1}, &prompt});
+   ov::InferRequest tokenizer_request = core.compile_model(tokenizer_xml, "CPU").create_infer_request();
+   tokenizer_request.set_input_tensor(ov::Tensor{ov::element::string, ov::Shape{batch_size}, &prompts[0]});
    tokenizer_request.infer();
    ov::Tensor input_ids = tokenizer_request.get_tensor("input_ids");
    ov::Tensor attention_mask = tokenizer_request.get_tensor("attention_mask");
-   ov::Tensor token_type_ids = tokenizer_request.get_tensor("token_type_ids");
 
-   ov::InferRequest infer_request = core.compile_model(model_xml, device).create_infer_request();
+   auto ov_model = core.read_model(model_xml.string());
+   ov::set_batch(ov_model, batch_size);
+   ov::InferRequest infer_request = core.compile_model(ov_model, device).create_infer_request();
    infer_request.set_tensor("input_ids", input_ids);
    infer_request.set_tensor("attention_mask", attention_mask);
-   infer_request.set_tensor("token_type_ids", token_type_ids);
+
+   // Add token_type_ids if needed.
+   try {
+       ov::Tensor token_type_ids = tokenizer_request.get_tensor("token_type_ids");
+	   infer_request.set_tensor("token_type_ids", token_type_ids);
+   } catch (const std::exception& e) {}
+
    infer_request.infer();
 
    auto output = infer_request.get_tensor("last_hidden_state");
    const float *output_buffer = output.data<const float>();
 
-   for (size_t i = 0; i < 10; i++) {
-       std::cout << output_buffer[i] << " ";
+   std::cout << output.get_size() << std::endl;
+   for (int i = 0; i < batch_size; ++i) {
+      for (size_t j = 0; j < 10; j++) {
+         std::cout << std::fixed << std::setprecision(4) << output_buffer[i * output.get_size() / batch_size + j] << " ";
+      }
+      std::cout << std::endl;
    }
-
-   std::cout << std::endl;
    return 0;
 }

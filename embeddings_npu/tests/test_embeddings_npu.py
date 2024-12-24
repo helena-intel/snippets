@@ -72,3 +72,22 @@ def test_2_compare_output(model_id):
     ov_sentence_embeddings = ov_model_output[0]
     ov_first_embeddings = ov_sentence_embeddings[:2, :4].round(4)
     assert np.allclose(ov_first_embeddings, pt_first_embeddings)
+
+@pytest.mark.parametrize("model_id", MODEL_IDS)
+def test_3_test_batch(model_id):
+    """
+    Test that output of model with embedded L2 normalization matches output of PyTorch
+    model with manual normalization
+    """
+    sentences = ["Hello world!", "This is a batch size test"]
+    ov_model_id = f"{Path(model_id).name}-static-norm"
+
+    ov_model = ov.Core().read_model(f"{ov_model_id}/openvino_model.xml")
+    ov.set_batch(ov_model, len(sentences))
+    ov_compiled_model = ov.Core().compile_model(ov_model, device_name="CPU")
+    ov_tokenizer = ov.Core().compile_model(f"{ov_model_id}/openvino_tokenizer.xml", device_name="CPU")
+    ov_encoded_input = ov_tokenizer(sentences)
+    ov_inputs = {input_name.any_name: input_data for (input_name, input_data) in ov_encoded_input.to_dict().items()}
+    ov_model_output = ov_compiled_model(ov_inputs)
+    ov_sentence_embeddings = ov_model_output[0]
+    assert ov_sentence_embeddings.shape[0] == len(sentences)

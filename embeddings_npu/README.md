@@ -22,6 +22,13 @@ reshape to a batch size of 1, sequence length of 128. Change BATCH_SIZE and
 INPUT_SIZE in the convert.py script to change this. We also configure the
 tokenizer to pad tokens to the INPUT_SIZE.
 
+> [!NOTE]
+> The batch size can be changed dynamically at inference time. To enable this,
+> we add `set_layout()` to the convert.py script and `ov.set_batch()` to
+> the inference code.
+> It is also possible to change the sequence length dynamically, by reshaping
+> the model and modifying the tokenizer. This is outside the scope of this example.
+
 Using OpenVINO's [preprocessing
 API](https://docs.openvino.ai/2024/openvino-workflow/running-inference/optimize-inference/optimize-preprocessing.html),
 we can embed L2 normalization in the model. This is not required, but it is
@@ -77,7 +84,7 @@ Run inference on Linux:
 
 ## Notes
 
-This script was tested on NPU on Ubuntu 24.10 with NPU driver 1.10.1 with the following models:
+This script was tested on NPU on Ubuntu 24.10 and Windows 11 with with the following models:
 
 -    "BAAI/bge-small-en-v1.5",
 -    "google-bert/bert-base-uncased",

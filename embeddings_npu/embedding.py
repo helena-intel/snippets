@@ -9,13 +9,15 @@ device = sys.argv[2]
 
 np.set_printoptions(precision=4)
 
-text = "Hello world!"
+prompts = ["Hello world!", "OpenVINO is great"]
 
 core = ov.Core()
-ov_model = core.compile_model(model_dir / "openvino_model.xml", device)
+ov_model = core.read_model(model_dir / "openvino_model.xml")
+ov.set_batch(ov_model, len(prompts))
+ov_compiled_model = core.compile_model(ov_model, device)
 ov_tokenizer = core.compile_model(model_dir / "openvino_tokenizer.xml", "CPU")
-ov_tokens = ov_tokenizer([text,])
-inputs = {"input_ids": ov_tokens["input_ids"], "attention_mask": ov_tokens["attention_mask"], "token_type_ids": ov_tokens["token_type_ids"]}
-ov_result = ov_model(inputs)
+ov_tokens = ov_tokenizer(prompts)
+inputs = {input_name.any_name: input_data for (input_name, input_data) in ov_tokens.to_dict().items()}
+ov_result = ov_compiled_model(inputs)
 
-print(ov_result[0].squeeze()[:10])
+print(ov_result[0][:,:10])
