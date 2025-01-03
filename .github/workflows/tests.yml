@@ -11,8 +11,10 @@ jobs:
   build:
     strategy:
       fail-fast: false
+      matrix:
+        os: ["ubuntu-24.04", "windows-latest"]
 
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -44,7 +46,17 @@ jobs:
           pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
           pip install optimum-intel openvino openvino-genai pytest
 
-      - name: Test snippets
+      - name: Test snippets with release
+        run: |
+          pytest .
+        env:
+          CI: "True"
+
+      - name: Install nightly
+        run: |
+          pip install --pre --upgrade openvino openvino-tokenizers openvino-genai --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly
+
+      - name: Test snippets with nightly
         run: |
           pytest .
         env:
