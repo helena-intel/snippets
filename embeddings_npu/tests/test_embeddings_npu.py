@@ -73,5 +73,8 @@ def test_2_compare_output(model_id, device):
     ov_model_output = ov_model(ov_inputs)
     ov_sentence_embeddings = ov_model_output[0]
     ov_first_embeddings = ov_sentence_embeddings[:2, :4].round(4)
-    kwargs = {"atol": 0.005} if device != "CPU" else {}
+    # If running with FP16 or BF16 precision, we accept a tolerance of 0.005 compared to PyTorch
+    # If running with FP32, results should be exactly the same as PyTorch (default numpy atol)
+    f32_precision = ov_model.get_property("INFERENCE_PRECISION_HINT") == ov.Type.f32
+    kwargs = {"atol": 0.005} if not f32_precision else {}
     assert np.allclose(ov_first_embeddings, pt_first_embeddings, **kwargs)

@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
        core.add_extension("libopenvino_tokenizers.so");
    #endif
 
-   std::vector<std::string> prompts = {"Hello world!", "OpenVINO is great", "Hello"};
+   std::vector<std::string> prompts = {"Hello world!", "OpenVINO is great"};
    std::size_t batch_size = prompts.size();
 
    ov::InferRequest tokenizer_request = core.compile_model(tokenizer_xml, "CPU").create_infer_request();
@@ -48,7 +48,6 @@ int main(int argc, char* argv[]) {
    auto output = infer_request.get_tensor("last_hidden_state");
    const float *output_buffer = output.data<const float>();
 
-   std::cout << output.get_size() << std::endl;
    for (int i = 0; i < batch_size; ++i) {
       for (size_t j = 0; j < 10; j++) {
          std::cout << std::fixed << std::setprecision(4) << output_buffer[i * output.get_size() / batch_size + j] << " ";
