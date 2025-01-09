@@ -1,12 +1,13 @@
 # OpenVINO embedding model inference on NPU
 
-This is a very basic example of running embedding models with OpenVINO on NPU. The application prints the first ten elements of the model output, with L2 normalization applied.
+This is a very basic example of running embedding models with OpenVINO on NPU, with Python and C++.
+The application prints the first ten elements of the model output, with L2 normalization applied.
 
 ## Prerequisites
 
 - For model conversion and reshaping: `pip install optimum[openvino]`
 - For Python inference: `pip install openvino openvino-tokenizers`
-- For C++ inference: OpenVINO GenAI archive recommended, e.g. https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/2024.6/windows
+- For C++ inference: OpenVINO GenAI archive recommended, e.g. https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/2024.6/
 
 Even though we do not use OpenVINO GenAI, the GenAI archive includes openvino-tokenizers, so using that archive is the easiest way to get started with development.
 
@@ -40,7 +41,7 @@ This script stores the static model with normalization in {model_name}-static-no
 To run the script, run convert.py with the model_id as argument. Feature
 extraction models from the Hugging Face hub are supported by optimum-intel. Not
 every model may work well on NPU. BERT models and derivates are expected to work
-well and have been validated, and experimentally BAAI/bge works well too. For example:
+well and have been validated. See below for the exact models that have been tested.
 
 ```sh
 python convert.py "BAAI/bge-small-en-v1.5"
@@ -51,17 +52,17 @@ python convert.py "BAAI/bge-small-en-v1.5"
 
 ## Run Python inference
 
-Run the embedding.py script with the path to the static model and the device as
+Run the embedding.py script in the `python` directory with the path to the static model and the device as
 arguments. CPU, GPU and NPU are supported.
 
 ```sh
-python embedding.py bge-small-en-ov-static-norm NPU
+python embedding.py ..\bge-small-en-ov-static-norm NPU
 ```
 
 ## Build C++ app and run inference
 
 In a terminal where you ran setupvars.bat or setupvars.ps1 from an extracted
-OpenVINO GenAI archive (see prerequisites):
+OpenVINO GenAI archive (see prerequisites), in the `cpp` directory:
 
 ```sh
 mkdir build
@@ -73,13 +74,13 @@ cmake --build . --config Release
 Run inference on Windows:
 
 ```
-Release\embedding.exe \path\to\model NPU
+Release\embedding.exe ..\..\bge-small-en-ov-static-norm NPU
 ```
 
 Run inference on Linux:
 
 ```
-./embedding /path/to/model NPU
+./embedding ../../bge-small-en-ov-static-norm NPU
 ```
 
 ## Notes

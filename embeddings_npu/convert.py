@@ -52,12 +52,21 @@ ov.save_model(ov_tokenizer, Path(new_model_dir) / "openvino_tokenizer.xml")
 new_model_dir_nonorm = Path(args.model_id).name + "-static"
 model.save_pretrained(new_model_dir_nonorm)
 ov.save_model(ov_tokenizer, Path(new_model_dir_nonorm) / "openvino_tokenizer.xml")
+hf_tokenizer.save_pretrained(new_model_dir_nonorm)
+model.config.save_pretrained(new_model_dir_nonorm)
 
 # ### Add L2 normalization to model
 ppp = ov.preprocess.PrePostProcessor(model.model)
 ppp.output("last_hidden_state").postprocess().custom(normalize)
 ppp_model = ppp.build()
+
+# ### Save the model
+
 os.makedirs(new_model_dir, exist_ok=True)
 ov.save_model(ppp_model, new_model_file)
+# hf_tokenizer and model.config are not needed for OpenVINO GenAI,
+# but are needed if the model will be used with optimum-intel
+hf_tokenizer.save_pretrained(new_model_dir)
+model.config.save_pretrained(new_model_dir)
 
 print(f"Model with L2 normalization and tokenizer saved to {new_model_dir}")
