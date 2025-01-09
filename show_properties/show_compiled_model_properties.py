@@ -1,23 +1,32 @@
 """
 Show OpenVINO device and compiled model properties.
-The script shows the supported properties for all devices, and the 
+The script shows the supported properties for all devices, and the
 values of the properties for the compiled model
 
 Prerequisites:
 - an OpenVINO IR model
 - `pip install openvino`
 
-Usage: python __file__ /path/to/model
+Usage: python __file__ /path/to/model_xml_or_dir
+
+If model_xml_or_dir is a directory, it should contain a model openvino_model.xml
+For models with different filenames, specify the full path to the model xml file
 """
 
 import importlib.metadata
 import sys
+from pathlib import Path
 
 import openvino as ov
 
-# sys.argv[1] is expected to be a directory containing openvino_model.xml
-# To use another model name, modify the compile_model line below
-model_directory = sys.argv[1]
+if len(sys.argv) != 2:
+    raise ValueError(f"Usage: {sys.argv[0]} /path/to/model_directory_or_xml_file")
+
+model_path = Path(sys.argv[1])
+if model_path.is_file() and model_path.suffix == ".xml":
+    ov_model_path = model_path
+elif model_path.is_dir() and (model_path / "openvino_model.xml").is_file():
+    ov_model_path = model_path / "openvino_model.xml"
 
 core = ov.Core()
 
@@ -32,8 +41,8 @@ for device in [*core.available_devices, "AUTO"]:
             print(f"{prop} ({rorw}): {value}")
     print()
 
-    model = core.compile_model(f"{model_directory}/openvino_model.xml", device_name=device)
-    print(f"----- {model_directory} {device} properties -----")
+    model = core.compile_model(ov_model_path, device_name=device)
+    print(f"----- {ov_model_path} {device} properties -----")
 
     for prop in model.get_property("SUPPORTED_PROPERTIES"):
         if prop not in ["SUPPORTED_PROPERTIES", "DEVICE_PROPERTIES"]:
