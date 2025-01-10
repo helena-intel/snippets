@@ -9,9 +9,9 @@ import time
 
 import cpuinfo
 import openvino_genai as ov_genai
+import vllm
 from datasets import load_dataset
 from transformers import AutoConfig
-from vllm import LLM, SamplingParams
 from vllm.config import _get_and_verify_max_len
 
 parser = argparse.ArgumentParser()
@@ -20,7 +20,7 @@ parser.add_argument("-f", "--framework", choices=("vllm", "genai"), required=Tru
 parser.add_argument("-n", "--num_items", "--num-items", type=int, required=True)
 parser.add_argument("--memory_size", "--memory-size", type=int, required=True, help="amount of memory to use in GB.")
 parser.add_argument("--max_new_tokens", "--max-new-tokens", type=int, default=50)
-parser.add_argument("--dataset", choices=("flores_101", "imdb", "gsm8k"), default="flores_101")
+parser.add_argument("--dataset", choices=("flores_101", "imdb", "gsm8k", "custom"), default="flores_101")
 parser.add_argument("--logfile", help="Optional path to log file. csv data is appended to the file")
 args = parser.parse_args()
 
@@ -31,8 +31,8 @@ max_num_batched_tokens = _get_and_verify_max_len(model_config, max_model_len=Non
 
 if args.framework == "vllm":
     os.environ["VLLM_OPENVINO_KVCACHE_SPACE"] = str(args.memory_size)
-    pipe = LLM(model=args.model_path, max_num_batched_tokens=max_num_batched_tokens)
-    config = SamplingParams(temperature=0, max_tokens=args.max_new_tokens, ignore_eos=True)
+    pipe = vllm.LLM(model=args.model_path, max_num_batched_tokens=max_num_batched_tokens)
+    config = vllm.SamplingParams(temperature=0, max_tokens=args.max_new_tokens, ignore_eos=True)
 else:
     scheduler = ov_genai.SchedulerConfig()
     scheduler.cache_size = args.memory_size
@@ -52,10 +52,21 @@ datasets = {
 
 
 # prepare dataset
-datasetname = "gsarti/flores_101" if args.dataset == "flores_101" else args.dataset
-ds = datasets[datasetname]
-dataset = load_dataset(datasetname, ds["config"], split=f"{ds['split']}[0:{args.num_items}]")
-sentences = [item[datasets[datasetname]["column"]] for item in dataset]
+if args.dataset == "custom":
+    # modify this for custom dataset loading
+    import pandas as pd
+
+    df = pd.read_excel("questions.xlsx")
+    args.num_items = args.num_items if args.num_items > -1 else len(df)
+    sentences = df["question"].to_list()[: args.num_items]
+else:
+    datasetname = "gsarti/flores_101" if args.dataset == "flores_101" else args.dataset
+    ds = datasets[datasetname]
+    dataset = load_dataset(datasetname, ds["config"], split=f"{ds['split']}[0:{args.num_items}]")
+    sentences = [item[datasets[datasetname]["column"]] for item in dataset]
+
+# warmup
+pipe.generate(["hello"], [config])
 
 # inference
 start_time = time.time()
@@ -65,6 +76,7 @@ total_duration = end_time - start_time
 
 results = args.__dict__
 results["max_batched_tokens"] = max_num_batched_tokens
+results["framework_version"] = ov_genai.__version__ if args.framework == "genai" else vllm.__version__
 results["cpu"] = cpuinfo.get_cpu_info().get("brand_raw")
 results["duration"] = round(total_duration, 2)
 
