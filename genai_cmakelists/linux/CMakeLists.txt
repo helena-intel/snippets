@@ -1,3 +1,12 @@
+# CMakeLists.txt for building and installing OpenVINO GenAI projects
+# This basic example copies all required OpenVINO libraries
+# to the installation directory, together with the executable.
+# Change SOURCE_FILE to your C++ source file name.
+#
+# The target system needs to have GPU drivers installed for GPU support.
+# For NPU support, NPU drivers need to be installed (and uncomment the
+# libopenvino_intel_npu_plugin.so line)
+
 cmake_minimum_required(VERSION 3.23)
 project(OpenVINOChatbotExample)
 set(CMAKE_CXX_STANDARD 17)
@@ -43,4 +52,5 @@ install(FILES
       "${TBB_LIB_DIR}/libhwloc.so"
       "${OPENVINO_LIB_DIR}/cache.json"
       "${OPENVINO_LIB_DIR}/libopenvino_intel_gpu_plugin.so"
+      # "${OPENVINO_LIB_DIR}/libopenvino_intel_npu_plugin.so"
 DESTINATION .)

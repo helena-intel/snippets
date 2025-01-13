@@ -8,6 +8,7 @@ import os
 import time
 
 import cpuinfo
+import openvino as ov
 import openvino_genai as ov_genai
 import vllm
 from datasets import load_dataset
@@ -57,12 +58,13 @@ if args.dataset == "custom":
     import pandas as pd
 
     df = pd.read_excel("questions.xlsx")
-    args.num_items = args.num_items if args.num_items > -1 else len(df)
+    args.num_items = args.num_items if (args.num_items > -1 and args.num_items < len(df)) else len(df)
     sentences = df["question"].to_list()[: args.num_items]
 else:
     datasetname = "gsarti/flores_101" if args.dataset == "flores_101" else args.dataset
     ds = datasets[datasetname]
     dataset = load_dataset(datasetname, ds["config"], split=f"{ds['split']}[0:{args.num_items}]")
+    args.num_items = args.num_items if args.num_items < len(dataset) else len(dataset)
     sentences = [item[datasets[datasetname]["column"]] for item in dataset]
 
 # warmup
@@ -76,6 +78,7 @@ total_duration = end_time - start_time
 
 results = args.__dict__
 results["max_batched_tokens"] = max_num_batched_tokens
+results["openvino_version"] = ov.__version__
 results["framework_version"] = ov_genai.__version__ if args.framework == "genai" else vllm.__version__
 results["cpu"] = cpuinfo.get_cpu_info().get("brand_raw")
 results["duration"] = round(total_duration, 2)

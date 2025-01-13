@@ -46,3 +46,7 @@ Release\llm_chat.exe \path\to\model GPU
 ```
 ./llm_chat /path/to/model GPU
 ```
+
+## Deploy
+
+To deploy this application including necessary DLLs, see these [CMakeLists](https://github.com/helena-intel/snippets/tree/main/genai_cmakelists).

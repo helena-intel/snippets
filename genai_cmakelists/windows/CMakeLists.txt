@@ -2,6 +2,11 @@
 # This basic example copies all required OpenVINO libraries
 # to the installation directory, together with the executable.
 # Change SOURCE_FILE to your C++ source file name.
+#
+# The target system needs to have MS Visual C++ Redistributable
+# https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+# GPU drivers need to be installed for GPU support; for NPU support, NPU drivers
+# need to be installed, and the openvino_intel_npu_plugin.dll line must be uncommented
 
 cmake_minimum_required(VERSION 3.23)
 project(OpenVINOExample)
@@ -34,4 +39,5 @@ install(FILES
       "${TBB_LIB_DIR}/tbbbind_2_5.dll"
       "${OPENVINO_LIB_DIR}/cache.json"
       "${OPENVINO_LIB_DIR}/openvino_intel_gpu_plugin.dll"
+      # "${OPENVINO_LIB_DIR}/openvino_intel_npu_plugin.dll"
 DESTINATION .)
