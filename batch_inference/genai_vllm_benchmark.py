@@ -10,10 +10,9 @@ import time
 import cpuinfo
 import openvino as ov
 import openvino_genai as ov_genai
-import vllm
 from datasets import load_dataset
 from transformers import AutoConfig
-from vllm.config import _get_and_verify_max_len
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--model_path", required=True)
@@ -25,9 +24,16 @@ parser.add_argument("--dataset", choices=("flores_101", "imdb", "gsm8k", "custom
 parser.add_argument("--logfile", help="Optional path to log file. csv data is appended to the file")
 args = parser.parse_args()
 
-# Align max_num_batched_tokens with vLLM default
-model_config = AutoConfig.from_pretrained(args.model_path)
-max_num_batched_tokens = _get_and_verify_max_len(model_config, max_model_len=None, disable_sliding_window=True, sliding_window_len=None)
+
+try:
+    import vllm
+    from vllm.config import _get_and_verify_max_len
+
+    # Align max_num_batched_tokens with vLLM default
+    model_config = AutoConfig.from_pretrained(args.model_path)
+    max_num_batched_tokens = _get_and_verify_max_len(model_config, max_model_len=None, disable_sliding_window=True, sliding_window_len=None)
+except ImportError:
+    max_num_batched_tokens = 2048
 
 
 if args.framework == "vllm":
