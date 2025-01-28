@@ -1,0 +1,3 @@
+openvino-genai
+optimum-intel
+pytest

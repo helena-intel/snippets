@@ -22,29 +22,13 @@ jobs:
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
-
         with:
           python-version: "3.12"
-
-      - name: Get pip cache dir
-        id: pip-cache
-        shell: bash
-        run: |
-          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-
-      - name: pip cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-
-      - name: Install dependencies
-        run: |
-          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-          pip install optimum-intel openvino openvino-genai pytest
+          cache: 'pip'
+          cache-dependency-path: |
+            **/requirements*.txt
+      - run: |
+          pip install -r .github/workflows/requirements_test.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Test snippets with release
         run: |
@@ -63,21 +47,13 @@ jobs:
           CI: "True"
 
       - name: Download genai and build chat sample
+        if: runner.os == 'Windows'
         run: |
           python utils/download_nightly.py
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              source `find ${HOME}/tools/openvino_genai -name setupvars.sh -print -quit`
-          else:
-              Get-ChildItem -Path . -Filter setupvars.ps1 -Recurse -File | Select-Object -First 1 | ForEach-Object { & $_.FullName }
-          fi
+          Get-ChildItem -Path $HOME -Filter setupvars.ps1 -Recurse -File | Select-Object -First 1 | ForEach-Object { & $_.FullName }
           cd llm_chat/cpp
           mkdir build
           cd build
           cmake ..
           cmake --build . --config Release
-          if [ "$RUNNER_OS" == "Linux" ]; then
-              ./llm_chat
-          else:
-              .\Release\llm_chat.exe
-          fi
 
