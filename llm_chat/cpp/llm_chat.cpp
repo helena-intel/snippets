@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Modified from https://github.com/openvinotoolkit/openvino.genai/tree/master/samples/cpp/chat_sample
-// OpenVINO chat_sample WITHOUT HISTORY between questions
 //
 // Usage: chat_sample model_path device
 
