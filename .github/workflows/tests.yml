@@ -36,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-20246
+          key: ${{ runner.os }}-pip-
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -61,3 +61,23 @@ jobs:
           pytest .
         env:
           CI: "True"
+
+      - name: Download genai and build chat sample
+        run: |
+          python utils/download_nightly.py
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              source `find ${HOME}/tools/openvino_genai -name setupvars.sh -print -quit`
+          else:
+              Get-ChildItem -Path . -Filter setupvars.ps1 -Recurse -File | Select-Object -First 1 | ForEach-Object { & $_.FullName }
+          fi
+          cd llm_chat/cpp
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config Release
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              ./llm_chat
+          else:
+              .\Release\llm_chat.exe
+          fi
+
