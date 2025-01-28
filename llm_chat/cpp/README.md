@@ -1,8 +1,8 @@
-# C++ chat sample for Llama 3.2
+# OpenVINO C++ chat sample
 
 ## Prepare environment:
 
-Download and uncompress an [OpenVINO archive](https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/nightly/?sort_by=NEW2OLD). 
+Download and uncompress an [OpenVINO archive](https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/2024.6/)
 setupvars.bat|ps1|sh are in the root of the uncompressed archive file.
 
 ### Windows
