@@ -31,39 +31,34 @@ def streamer(subword):
     return False
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("model_dir")
-    parser.add_argument("device")
-    args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("model_dir")
+parser.add_argument("device")
+args = parser.parse_args()
 
-    pipeline_config = {"NPUW_CACHE_DIR": "npucache"} if args.device == "NPU" else {"CACHE_DIR": "model_cache"}
+pipeline_config = {"NPUW_CACHE_DIR": "npucache"} if args.device == "NPU" else {"CACHE_DIR": "model_cache"}
 
-    pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config)
+pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config)
 
-    config = pipe.get_generation_config()
-    config.max_new_tokens = 512
-    config.do_sample = False
-    config.repetition_penalty = 1.1
+config = pipe.get_generation_config()
+config.max_new_tokens = 512
+config.do_sample = False
+config.repetition_penalty = 1.1
 
-    # warmup inference for GPU reproducibility
-    pipe.generate("hello", max_new_tokens=5, do_sample=False)
+# warmup inference for GPU reproducibility
+pipe.generate("hello", max_new_tokens=5, do_sample=False)
 
-    pipe.start_chat(system_message=start_message)
-    while True:
-        try:
-            prompt = input("question:\n")
-        except EOFError:
-            break
+pipe.start_chat(system_message=start_message)
+while True:
+    try:
+        prompt = input("question:\n")
+    except EOFError:
+        break
 
-        start = time.perf_counter()
-        pipe.generate(prompt, config, streamer)
-        end = time.perf_counter()
-        print()
-        print(f"Inference duration: {end-start:.2f} seconds")
-        print("\n----------")
-    pipe.finish_chat()
-
-
-if "__main__" == __name__:
-    main()
+    start = time.perf_counter()
+    pipe.generate(prompt, config, streamer)
+    end = time.perf_counter()
+    print()
+    print(f"Inference duration: {end-start:.2f} seconds")
+    print("\n----------")
+pipe.finish_chat()
