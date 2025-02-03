@@ -13,31 +13,39 @@ If model_xml_or_dir is a directory, it should contain a model openvino_model.xml
 For models with different filenames, specify the full path to the model xml file
 """
 
+import argparse
 import importlib.metadata
 import sys
 from pathlib import Path
 
 import openvino as ov
 
-if len(sys.argv) != 2:
-    raise ValueError(f"Usage: {sys.argv[0]} /path/to/model_directory_or_xml_file")
+parser = argparse.ArgumentParser()
+parser.add_argument("model")
+parser.add_argument("devices", nargs="*", default=None)
+args = parser.parse_args()
 
 model_path = Path(sys.argv[1])
-if model_path.is_file() and model_path.suffix == ".xml":
-    ov_model_path = model_path
-elif model_path.is_dir() and (model_path / "openvino_model.xml").is_file():
+if model_path.is_dir() and (model_path / "openvino_model.xml").is_file():
     ov_model_path = model_path / "openvino_model.xml"
+else:
+    ov_model_path = model_path
 
 core = ov.Core()
 
-for device in [*core.available_devices, "AUTO"]:
+devices = args.devices if args.devices else [*core.available_devices, "AUTO"]
+
+for device in devices:
     print(f"===== {device} SUPPORTED_PROPERTIES =====")
     supported_properties = core.get_property(device, "SUPPORTED_PROPERTIES")
     for prop in supported_properties:
         if not prop == "SUPPORTED_PROPERTIES":
-            value = core.get_property(device, prop)
-            # read-only or read-write property
-            rorw = supported_properties[prop]
+            try:
+                value = core.get_property(device, prop)
+                # read-only or read-write property
+                rorw = supported_properties[prop]
+            except TypeError:
+                rorw = "--- error getting property ---"
             print(f"{prop} ({rorw}): {value}")
     print()
 
@@ -46,7 +54,10 @@ for device in [*core.available_devices, "AUTO"]:
 
     for prop in model.get_property("SUPPORTED_PROPERTIES"):
         if prop not in ["SUPPORTED_PROPERTIES", "DEVICE_PROPERTIES"]:
-            value = model.get_property(prop)
+            try:
+                value = model.get_property(prop)
+            except TypeError:
+                value = "--- error getting property ---"
             print(f"{prop}: {value}")
     print()
 
