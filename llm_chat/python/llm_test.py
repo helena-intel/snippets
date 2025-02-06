@@ -1,5 +1,7 @@
 """
-OpenVINO LLM chat sample that uses greedy search for reproducible inference
+OpenVINO LLM chat sample without chat template. This is meant to test models that do not have a chat
+template. For better results, use a chat model (usually named -instruct or -chat) and use the
+llm_chat.py sample instead. This chat will not have history, it is purely meant to test model outputs.
 
 Prerequisites:
 - pip install openvino-genai
@@ -14,13 +16,6 @@ import argparse
 import time
 
 import openvino_genai
-
-DEFAULT_SYSTEM_PROMPT = """
-You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
-If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
-"""
-
-start_message = " <|start_header_id|>system<|end_header_id|>\n\n" + DEFAULT_SYSTEM_PROMPT + "<|eot_id|>"
 
 
 def streamer(subword):
@@ -40,17 +35,15 @@ pipeline_config = {"NPUW_CACHE_DIR": "npucache"} if args.device == "NPU" else {"
 pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config)
 
 config = pipe.get_generation_config()
-config.max_new_tokens = 512
+config.max_new_tokens = 100
 config.do_sample = False
-config.repetition_penalty = 1.1
 
-# warmup inference for GPU reproducibility
+# warmup inference
 pipe.generate("hello", max_new_tokens=5, do_sample=False)
 
-pipe.start_chat(system_message=start_message)
 while True:
     try:
-        prompt = input("question:\n")
+        prompt = input("prompt:\n")
     except EOFError:
         break
 
@@ -60,4 +53,3 @@ while True:
     print()
     print(f"Inference duration: {end-start:.2f} seconds")
     print("\n----------")
-pipe.finish_chat()
