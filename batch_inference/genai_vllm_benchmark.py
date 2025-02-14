@@ -22,6 +22,7 @@ parser.add_argument("--memory_size", "--memory-size", type=int, required=True, h
 parser.add_argument("--max_new_tokens", "--max-new-tokens", type=int, default=50)
 parser.add_argument("--dataset", choices=("flores_101", "imdb", "gsm8k", "custom"), default="flores_101")
 parser.add_argument("--logfile", help="Optional path to log file. csv data is appended to the file")
+parser.add_argument("--notes", help="Optional notes to add to the logfile, for example to distinguish between two different configurations")
 args = parser.parse_args()
 
 
@@ -88,6 +89,7 @@ results["openvino_version"] = ov.__version__
 results["framework_version"] = ov_genai.__version__ if args.framework == "genai" else vllm.__version__
 results["cpu"] = cpuinfo.get_cpu_info().get("brand_raw")
 results["duration"] = round(total_duration, 2)
+results["notes"] = args.notes
 
 for key, value in results.items():
     print(f"{key:<20}: {value}")
