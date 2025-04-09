@@ -7,7 +7,7 @@ Prerequisites:
 - pip install openvino-genai
 - an OpenVINO LLM.
 
-Usage: python llm_chat.py /path/to/ov_model DEVICE
+Usage: python llm_test.py /path/to/ov_model DEVICE
 
 Modified from https://github.com/openvinotoolkit/openvino.genai/tree/master/samples/python/chat_sample
 """
