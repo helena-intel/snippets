@@ -1,5 +1,5 @@
 """
-OpenVINO LLM chat sample without chat template. This is meant to test models that do not have a chat
+OpenVINO LLM chat sample without chat template. This sample is meant to test models that do not have a chat
 template. For better results, use a chat model (usually named -instruct or -chat) and use the
 llm_chat.py sample instead. This chat will not have history, it is purely meant to test model outputs.
 
@@ -30,16 +30,17 @@ parser.add_argument("model_dir")
 parser.add_argument("device")
 args = parser.parse_args()
 
-pipeline_config = {"NPUW_CACHE_DIR": "npucache"} if args.device == "NPU" else {"CACHE_DIR": "model_cache"}
+pipeline_config = {"CACHE_DIR": "model_cache"}
 
 pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config)
 
 config = pipe.get_generation_config()
 config.max_new_tokens = 100
 config.do_sample = False
+config.apply_chat_template = False  # From 2025.1, chat templates are automatically enabled if they exist for the model
 
 # warmup inference
-pipe.generate("hello", max_new_tokens=5, do_sample=False)
+pipe.generate("hello", max_new_tokens=1, do_sample=False)
 
 while True:
     try:
