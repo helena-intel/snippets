@@ -4,13 +4,19 @@ Prerequisites:
 - `pip install openvino`
 """
 
+import argparse
 import importlib.metadata
 
 import openvino as ov
 
 core = ov.Core()
 
-for device in [*core.available_devices, "AUTO"]:
+parser = argparse.ArgumentParser()
+parser.add_argument("devices", nargs="*", default=None)
+args = parser.parse_args()
+devices = args.devices if args.devices else [*core.available_devices, "AUTO"]
+
+for device in devices:
     print(f"===== {device} SUPPORTED_PROPERTIES =====")
     supported_properties = core.get_property(device, "SUPPORTED_PROPERTIES")
     for prop in supported_properties:

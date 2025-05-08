@@ -35,7 +35,7 @@ parser.add_argument("model_dir")
 parser.add_argument("device")
 args = parser.parse_args()
 
-pipeline_config = {"NPUW_CACHE_DIR": "npucache"} if args.device == "NPU" else {"CACHE_DIR": "model_cache"}
+pipeline_config = {"CACHE_DIR": "model_cache"}
 
 pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config)
 
