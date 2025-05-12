@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Show OpenVINO device properties.
 Prerequisites:
