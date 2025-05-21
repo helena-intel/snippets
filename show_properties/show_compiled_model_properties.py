@@ -30,6 +30,8 @@ if model_path.is_dir() and (model_path / "openvino_model.xml").is_file():
     ov_model_path = model_path / "openvino_model.xml"
 else:
     ov_model_path = model_path
+    if "tokenizer.xml" in str(ov_model_path):
+        import openvino_tokenizers
 
 core = ov.Core()
 
