@@ -40,7 +40,7 @@ config.do_sample = False
 config.apply_chat_template = False  # From 2025.1, chat templates are automatically enabled if they exist for the model
 
 # warmup inference
-pipe.generate("hello", max_new_tokens=1, do_sample=False)
+pipe.generate("hello", max_new_tokens=1, do_sample=False, apply_chat_template=False)
 
 while True:
     try:
