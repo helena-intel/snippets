@@ -7,6 +7,7 @@
 
 #include "openvino/genai/llm_pipeline.hpp"
 
+// This format is for models following Llama chat template. Modify for other models.
 std::string start_message = " <|start_header_id|>system<|end_header_id|>\n\n You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature. Make sure that code is concise and correct.  If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.<|eot_id|>";
 
 int main(int argc, char* argv[]) try {
@@ -22,7 +23,6 @@ int main(int argc, char* argv[]) try {
     ov::genai::GenerationConfig config = pipe.get_generation_config();
     config.max_new_tokens = 512;
     config.do_sample = false;
-    config.repetition_penalty = 1.1;
 
     std::function<bool(std::string)> streamer = [](std::string word) { 
         std::cout << word << std::flush;

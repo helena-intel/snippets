@@ -20,6 +20,7 @@ You are a helpful, respectful and honest assistant. Always answer as helpfully a
 If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
 """
 
+# This format is for models following Llama chat template. Modify for other models.
 start_message = " <|start_header_id|>system<|end_header_id|>\n\n" + DEFAULT_SYSTEM_PROMPT + "<|eot_id|>"
 
 
@@ -42,10 +43,9 @@ pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config
 config = pipe.get_generation_config()
 config.max_new_tokens = 512
 config.do_sample = False
-config.repetition_penalty = 1.1
 
 # warmup inference for GPU reproducibility
-pipe.generate("hello", max_new_tokens=5, do_sample=False)
+pipe.generate("hello", max_new_tokens=1, do_sample=False)
 
 pipe.start_chat(system_message=start_message)
 while True:
