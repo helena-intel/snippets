@@ -15,13 +15,7 @@ import time
 
 import openvino_genai
 
-DEFAULT_SYSTEM_PROMPT = """
-You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
-If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
-"""
-
-# This format is for models following Llama chat template. Modify for other models.
-start_message = " <|start_header_id|>system<|end_header_id|>\n\n" + DEFAULT_SYSTEM_PROMPT + "<|eot_id|>"
+DEFAULT_SYSTEM_PROMPT = """You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.  If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."""
 
 
 def streamer(subword):
@@ -39,6 +33,8 @@ args = parser.parse_args()
 pipeline_config = {"CACHE_DIR": "model_cache"}
 
 pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config)
+system_prompt_message = [{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}]
+system_message = pipe.get_tokenizer().apply_chat_template(system_prompt_message, add_generation_prompt=False)
 
 config = pipe.get_generation_config()
 config.max_new_tokens = 512
@@ -47,7 +43,7 @@ config.do_sample = False
 # warmup inference for GPU reproducibility
 pipe.generate("hello", max_new_tokens=1, do_sample=False)
 
-pipe.start_chat(system_message=start_message)
+pipe.start_chat(system_message=system_message)
 while True:
     try:
         prompt = input("question:\n")

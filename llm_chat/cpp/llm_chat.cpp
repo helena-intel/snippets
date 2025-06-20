@@ -7,8 +7,8 @@
 
 #include "openvino/genai/llm_pipeline.hpp"
 
-// This format is for models following Llama chat template. Modify for other models.
-std::string start_message = " <|start_header_id|>system<|end_header_id|>\n\n You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature. Make sure that code is concise and correct.  If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.<|eot_id|>";
+std::string DEFAULT_SYSTEM_PROMPT = "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.  If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.";
+
 
 int main(int argc, char* argv[]) try {
     if (3 != argc) {
@@ -19,7 +19,10 @@ int main(int argc, char* argv[]) try {
     std::string device = argv[2];  // CPU, GPU, NPU 
     ov::AnyMap pipeline_config = { { "CACHE_DIR", "model_cache" } };
     ov::genai::LLMPipeline pipe(models_path, device, pipeline_config);
-    
+
+    ov::genai::ChatHistory system_prompt_message = {{{"role", "system"}, {"content", DEFAULT_SYSTEM_PROMPT}}};
+    std::string system_message = pipe.get_tokenizer().apply_chat_template(system_prompt_message, false);
+
     ov::genai::GenerationConfig config = pipe.get_generation_config();
     config.max_new_tokens = 512;
     config.do_sample = false;
@@ -33,11 +36,11 @@ int main(int argc, char* argv[]) try {
 
     // Warmup inference for GPU reproducibility
     ov::genai::GenerationConfig warmupconfig = pipe.get_generation_config();
-    warmupconfig.max_new_tokens = 5;
+    warmupconfig.max_new_tokens = 1;
     warmupconfig.do_sample = false;
-    pipe.generate("say something", warmupconfig);
+    pipe.generate("hello", warmupconfig);
     
-    pipe.start_chat(start_message);
+    pipe.start_chat(system_message);
     std::cout << "question:\n";
     while (std::getline(std::cin, prompt)) {
         pipe.generate(prompt, config, streamer);
