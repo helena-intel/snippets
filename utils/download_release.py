@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 """
-Download and extract most recent OpenVINO GenAI nightly archive and show setupvars command
+Download OpenVINO GenAI release archive and show setupvars command
 The archive is extracted in $HOME/tools/openvino_genai/openvino_genai_version
 Modify `destination_dir` to use a different directory
 This is intended as a simple script for development use, not expected to be robust or for production use
 
 Requirements: `pip install requests`
+
+Usage: python download_release.py version
+Example: python download_release.py 2025.2
 """
 
 import re
@@ -19,37 +22,27 @@ from pathlib import Path
 
 import requests
 
-
-def find_nested_item(tree, path):
-    current = tree
-    for name in path:
-        current = next(item for item in current.get("children", []) if item["name"] == name)
-    return current
-
-
 destination_dir = Path("~/tools/openvino_genai").expanduser()
+
+version = sys.argv[1]
 
 if sys.platform == "linux":
     ubuntu_version = subprocess.check_output(["lsb_release", "-rs"], text=True).split(".")[0]
     genai_package_str = f"ubuntu{ubuntu_version}"
     extension = ".tar.gz"
+    platform = "linux"
 elif sys.platform == "win32":
     genai_package_str = "windows"
     extension = ".zip"
+    platform = "windows"
 
-filetree = requests.get("https://storage.openvinotoolkit.org/filetree.json").json()
+archive_filename = rf"openvino_genai_{genai_package_str}_{version}.0.0_x86_64{extension}"
+package_url = rf"https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/{version}/{platform}/{archive_filename}"
 
-path = ["repositories", "openvino_genai", "packages", "nightly"]
-nightly = find_nested_item({"children": filetree["children"]}, path)
-latest_name = sorted([item["name"] for item in nightly["children"] if "latest" not in item["name"]], reverse=True)[0]
-latest_files = next(item for item in nightly["children"] if item["name"] == latest_name)
-latest_package = next(item["name"] for item in latest_files["children"] if re.match(f"openvino_genai_{genai_package_str}.*{extension}$", item["name"]))
-
-package_url = f"https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/nightly/{latest_name}/{latest_package}"
 response = requests.get(package_url)
 
 with tempfile.TemporaryDirectory() as tmpdir:
-    archive_file = Path(tmpdir) / latest_package
+    archive_file = Path(tmpdir) / archive_filename
     dirname = re.split(extension, archive_file.name)[0]
     with open(archive_file, "wb") as file:
         file.write(response.content)
