@@ -5,7 +5,7 @@ llm_chat.py sample instead. This chat will not have history, it is purely meant 
 
 Prerequisites:
 - pip install openvino-genai
-- an OpenVINO LLM.
+- an OpenVINO LLM. See https://github.com/helena-intel/readmes/blob/main/genai-best-practices.md
 
 Usage: python llm_test.py /path/to/ov_model DEVICE
 
@@ -37,7 +37,7 @@ pipe = openvino_genai.LLMPipeline(args.model_dir, args.device, **pipeline_config
 config = pipe.get_generation_config()
 config.max_new_tokens = 100
 config.do_sample = False
-config.apply_chat_template = False  # From 2025.1, chat templates are automatically enabled if they exist for the model
+config.apply_chat_template = False  # From 2025.1, chat templates are automatically enabled
 
 # warmup inference
 pipe.generate("hello", max_new_tokens=1, do_sample=False, apply_chat_template=False)

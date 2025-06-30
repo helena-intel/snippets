@@ -7,7 +7,7 @@
 
 #include "openvino/genai/llm_pipeline.hpp"
 
-std::string DEFAULT_SYSTEM_PROMPT = "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.  If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.";
+std::string system_prompt = "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.  If a question does not make any sense or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.";
 
 
 int main(int argc, char* argv[]) try {
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) try {
     ov::AnyMap pipeline_config = { { "CACHE_DIR", "model_cache" } };
     ov::genai::LLMPipeline pipe(models_path, device, pipeline_config);
 
-    ov::genai::ChatHistory system_prompt_message = {{{"role", "system"}, {"content", DEFAULT_SYSTEM_PROMPT}}};
+    ov::genai::ChatHistory system_prompt_message = {{{"role", "system"}, {"content", system_prompt}}};
     std::string system_message = pipe.get_tokenizer().apply_chat_template(system_prompt_message, false);
 
     ov::genai::GenerationConfig config = pipe.get_generation_config();
