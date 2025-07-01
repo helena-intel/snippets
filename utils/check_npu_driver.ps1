@@ -7,7 +7,7 @@
 # powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "iex (irm 'https://raw.githubusercontent.com/helena-intel/snippets/refs/heads/main/utils/check_npu_driver.ps1')"
 
 $deviceNameMatch = "AI Boost"
-$latestDriverVersion = "32.0.100.4023"
+$latestDriverVersion = "32.0.100.4082"
 $driverUpdateURL = "https://www.intel.com/content/www/us/en/download/794734/intel-npu-driver-windows.html"
 
 # Get current driver version
