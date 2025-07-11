@@ -20,7 +20,7 @@ devices = args.devices if args.devices else [*core.available_devices, "AUTO"]
 for device in devices:
     print(f"===== {device} SUPPORTED_PROPERTIES =====")
     supported_properties = core.get_property(device, "SUPPORTED_PROPERTIES")
-    for prop in supported_properties:
+    for prop in sorted(supported_properties):
         if not prop == "SUPPORTED_PROPERTIES":
             try:
                 value = core.get_property(device, prop)
