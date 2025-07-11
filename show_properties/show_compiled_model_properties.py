@@ -7,22 +7,37 @@ Prerequisites:
 - an OpenVINO IR model
 - `pip install openvino`
 
-Usage: python __file__ /path/to/model_xml_or_dir
+Usage: python show_compiled_model_properties.py /path/to/model_xml_or_dir
 
 If model_xml_or_dir is a directory, it should contain a model openvino_model.xml
 For models with different filenames, specify the full path to the model xml file
+
+Optional: specify a list of devices, or an OpenVINO config as .json
+
+Example:
+python show_compiled_model_properties.py model.xml CPU GPU --config config.json
 """
 
 import argparse
 import importlib.metadata
+import json
 import sys
 from pathlib import Path
 
 import openvino as ov
 
 parser = argparse.ArgumentParser()
-parser.add_argument("model")
-parser.add_argument("devices", nargs="*", default=None)
+parser.add_argument("model", help="Path to OpenVINO model .xml file or directory containing 'openvino_model.xml'")
+parser.add_argument(
+    "devices",
+    nargs="*",
+    default=None,
+    help="Optional: one or more devices to show properties for. By default properties for all available devices will be shown",
+)
+parser.add_argument(
+    "--config",
+    help="Optional: path to config.json for OpenVINO config passed to `compile_model()`. The config must be compatible with the device(s)",
+)
 args = parser.parse_args()
 
 model_path = Path(sys.argv[1])
@@ -33,14 +48,24 @@ else:
     if "tokenizer.xml" in str(ov_model_path):
         import openvino_tokenizers
 
+
 core = ov.Core()
 
 devices = args.devices if args.devices else [*core.available_devices, "AUTO"]
 
+ov_config = None
+if args.config is not None:
+    config = Path(args.config)
+    if not (config.suffix == ".json" and config.is_file()):
+        raise ValueError("config should point to a .json file containing an OpenVINO config.")
+    with open(config) as f:
+        ov_config = json.load(f)
+
+
 for device in devices:
     print(f"===== {device} SUPPORTED_PROPERTIES =====")
     supported_properties = core.get_property(device, "SUPPORTED_PROPERTIES")
-    for prop in supported_properties:
+    for prop in sorted(supported_properties):
         if not prop == "SUPPORTED_PROPERTIES":
             try:
                 value = core.get_property(device, prop)
@@ -51,10 +76,10 @@ for device in devices:
             print(f"{prop} ({rorw}): {value}")
     print()
 
-    model = core.compile_model(ov_model_path, device_name=device)
+    model = core.compile_model(ov_model_path, device_name=device, config=ov_config)
     print(f"----- {ov_model_path} {device} properties -----")
 
-    for prop in model.get_property("SUPPORTED_PROPERTIES"):
+    for prop in sorted(model.get_property("SUPPORTED_PROPERTIES")):
         if prop not in ["SUPPORTED_PROPERTIES", "DEVICE_PROPERTIES"]:
             try:
                 value = model.get_property(prop)
@@ -65,9 +90,11 @@ for device in devices:
 
 try:
     openvino_version = importlib.metadata.version("openvino")
-except:
+except Exception:
     # if OpenVINO is installed from archives, importlib.metadata fails
     raise
     openvino_version = ov.__version__
 
+if args.config is not None:
+    print(f"Model compiled with OpenVINO config: {ov_config}")
 print(f"OpenVINO version: {openvino_version}")
