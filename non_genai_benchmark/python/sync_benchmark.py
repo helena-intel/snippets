@@ -102,7 +102,8 @@ def benchmark(model_or_file, device, user_config=None, reshape=None, performance
     - model: ov.Model or path to .onnx or .xml model
     - device: Inference device. CPU, GPU, NPU, AUTO
     - user_config: Optional path to json file with OpenVINO config which is passed to .compile_model
-    - reshape: Optional shape to reshape the model to. Example `--reshape (1,3,512,512)`
+    - reshape: Optional shape to reshape the model to. Example `--reshape (1,3,512,512)`. If the model has multiple inputs,
+      all inputs will be reshaped to this shape.
     - performance_counters: set to True to show 5 most time consuming apps after benchmark
     - logfile: Optional path to logfile. Benchmark results will be appended to this file
     - limit_cpu_core: Optional integer number of the specific CPU core to limit the process to (requires `pip install psutil`)
@@ -113,7 +114,7 @@ def benchmark(model_or_file, device, user_config=None, reshape=None, performance
         pid = os.getpid()
         p = psutil.Process(pid)
         p.cpu_affinity([limit_cpu_core])
-    
+
     core = ov.Core()
 
     if isinstance(model_or_file, str) or isinstance(model_or_file, os.PathLike):
@@ -129,7 +130,10 @@ def benchmark(model_or_file, device, user_config=None, reshape=None, performance
     if model.inputs[0].get_partial_shape().is_dynamic and reshape is None:
         raise ValueError("Models with dynamic shapes are not supported. To reshape to static shapes on the fly, use the `reshape` argument")
     if reshape is not None:
-        model.reshape(reshape)
+        shapes = {}
+        for input in model.inputs:
+            shapes[input.any_name] = reshape
+        model.reshape(shapes)
 
     config = {"PERFORMANCE_HINT": "LATENCY"}
     if performance_counters:
@@ -195,7 +199,7 @@ def benchmark(model_or_file, device, user_config=None, reshape=None, performance
     }
     if logfile is not None:
         writeheader = not Path(logfile).is_file()
-
+        Path(logfile).parent.mkdir(exist_ok=True, parents=True)
         with open(logfile, "a", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=d.keys())
             if writeheader:
@@ -208,7 +212,7 @@ def benchmark(model_or_file, device, user_config=None, reshape=None, performance
     print(f'{d["model"]:<27}{d["device"]:<16}{cpu_device:<35}{d["openvino"]:<22}{d["latency_median"]:<16}{configlog}')
 
     if performance_counters:
-        list_performance_counters(requests[0], filename=None if logfile is None else filename)
+        list_performance_counters(requests[0], filename=None)
 
     del compiled_model
     gc.collect()
@@ -216,9 +220,11 @@ def benchmark(model_or_file, device, user_config=None, reshape=None, performance
 
 def benchmark_all(model_or_file, performance_counters, reshape, user_config, logfile, limit_cpu_core):
     devices = ov.Core().available_devices
+
     if "NPU" in devices:
         # Move NPU to the end of the list so that if it crashes only NPU inference is not run
         devices = [device for device in devices if "NPU" not in device] + ["NPU"]
+
     for device in devices:
         benchmark(
             model_or_file=model_or_file,
@@ -243,13 +249,24 @@ def parse_shape(shape):
 
 def build_argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("model")
-    parser.add_argument("device")
-    parser.add_argument("--performance_counters", "-pc", action="store_true")
-    parser.add_argument("--reshape")
-    parser.add_argument("--config")
-    parser.add_argument("--log")
-    parser.add_argument("--core", type=int)
+    parser.add_argument("model", help="Path to model file. Example: openvino_model.xml")
+    parser.add_argument("device", help="Inference device. Example: CPU, GPU, NPU")
+    parser.add_argument(
+        "--performance_counters",
+        "-pc",
+        action="store_true",
+        help="Optional: compute performance counters and show the operations that take the most time.",
+    )
+    parser.add_argument(
+        "--reshape",
+        help="Optional: reshape model to specified input shape. Multiple inputs are supported only if all inputs can be reshaped to the same shape. Example: `--reshape [1,3,240,240]`)",
+    )
+    parser.add_argument("--config", help="Optional: path to .json file with OpenVINO config")
+    parser.add_argument(
+        "--log",
+        help="Optional: path to log.csv. Will be created if it does not exist. If it does exist, log entries will be APPENDED to this file",
+    )
+    parser.add_argument("--core", type=int, help="Optional and experimental: limit CPU to a particular core")
 
     return parser
 
@@ -258,7 +275,6 @@ if __name__ == "__main__":
     parser = build_argparser()
     args = parser.parse_args()
     reshape = parse_shape(args.reshape) if args.reshape is not None else None
-    print(args)
 
     if args.device.lower() == "all":
         benchmark_all(

@@ -6,10 +6,11 @@ Example script that extends sync_benchmark.py to use HETERO plugin for faster in
 This implementation is specifically useful for detection models with a TopK operation.
 
 To use HETERO, on systems with GPU or NPU, use device HETERO:GPU,CPU or HETERO:NPU,CPU
+The TopK operation will be run on the last device in the list. In the above examples, it will run on CPU.
 
 Requires: sync_benchmark.py script and `pip install openvino`
 
-Usage: python sync_benchmark.py model device [--performance_counters] [--reshape (1,3,240,240)] [--config path_to_config.json] [--log log.csv]
+Usage: python sync_benchmark_hetero.py model device [--performance_counters] [--reshape (1,3,240,240)] [--config path_to_config.json] [--log log.csv]
 """
 
 import openvino as ov
@@ -60,7 +61,6 @@ def benchmark_all(model_or_file, performance_counters, reshape, user_config, log
 
 
 if __name__ == "__main__":
-    import argparse
     from sync_benchmark import benchmark, build_argparser, parse_shape
 
     parser = build_argparser()
@@ -72,7 +72,11 @@ if __name__ == "__main__":
     # reshape before changing affinity
     if reshape is not None:
         model.reshape(reshape)
-    set_affinity(model=model, node_name="TopK", inference_device=args.device, target_device="CPU", model_name=args.model)
+
+    hetero_devices = args.device.split(":")[-1].split(",")
+    if args.device != "ALL" and not ("HETERO" in args.device and len(hetero_devices) > 1):
+        raise ValueError("This sample should be used with HETERO device, specifying devices to run on. Example: 'HETERO:GPU,CPU'")
+
 
     if args.device.lower() == "all":
         benchmark_all(
@@ -84,6 +88,8 @@ if __name__ == "__main__":
             limit_cpu_core=args.core,
         )
     else:
+        target_device = hetero_devices[-1]
+        set_affinity(model=model, node_name="TopK", inference_device=args.device, target_device=target_device, model_name=args.model)
         benchmark(
             model_or_file=model,
             device=args.device,
