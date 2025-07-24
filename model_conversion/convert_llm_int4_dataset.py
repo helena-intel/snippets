@@ -1,6 +1,6 @@
 """
 This snippets shows how to export a text-generation model to OpenVINO INT4 with a custom dataset
-Quantization statistics are cached for faster quantization when quantizing multiple times
+Quantization statistics are optionally cached for faster quantization when quantizing multiple times
 
 Requirements: `pip install optimum[openvino]`
 
@@ -58,14 +58,14 @@ if npu_support:
     wq_config["ratio"] = 1.0
 print("*** Quantization config:", wq_config)
 # Save statistics for faster quantization after the first time
-statistics_dir = re.sub(r"[^a-z0-9_]", "_", f"statistics_{dataset_name}_{dataset_subset}_{dataset_split}")
-advanced_parameters = AdvancedCompressionParameters(statistics_path=Path(snapshot_dir) / statistics_dir)
-wq_config["advanced_parameters"] = advanced_parameters
+# statistics_dir = re.sub(r"[^a-z0-9_]", "_", f"statistics_{dataset_name}_{dataset_subset}_{dataset_split}")
+# advanced_parameters = AdvancedCompressionParameters(statistics_path=Path(snapshot_dir) / statistics_dir)
+# wq_config["advanced_parameters"] = advanced_parameters
 quantization_config = OVWeightQuantizationConfig(**wq_config, dataset=texts)
 
 # Export model with quantization config and save exported model
 model = OVModelForCausalLM.from_pretrained(
     model_id, export=True, compile=False, quantization_config=quantization_config, trust_remote_code=trust_remote_code
 )
-model.save_pretrained(save_dir)
+model.save_pretrained(str(save_dir))
 print(f"*** Exported model and tokenizers were saved to {save_dir}")
