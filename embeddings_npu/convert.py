@@ -9,7 +9,7 @@ from openvino_tokenizers import convert_tokenizer
 from optimum.intel import OVModelForFeatureExtraction
 from transformers import AutoTokenizer
 
-INPUT_SIZE = 128
+INPUT_SIZE = 512
 BATCH_SIZE = 1
 
 parser = argparse.ArgumentParser()
@@ -29,8 +29,17 @@ def normalize(output: ov.runtime.Output):
     return op.normalize_l2(output, 1, 1e-12, "max")
 
 
-# ### Export and reshape the model
+# ### Load model and tokenizer
 model = OVModelForFeatureExtraction.from_pretrained(args.model_id, export=True, compile=False, trust_remote_code=args.trust_remote_code)
+hf_tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=args.trust_remote_code)
+
+# Save dynamic model and tokenizers
+dynamic_model_dir = str(new_model_dir).replace("-static-norm", "-dynamic")
+model.save_pretrained(dynamic_model_dir)
+hf_tokenizer.save_pretrained(dynamic_model_dir)
+ov_tokenizer = convert_tokenizer(hf_tokenizer)
+ov.save_model(ov_tokenizer, Path(dynamic_model_dir) / "openvino_tokenizer.xml")
+
 model.reshape(BATCH_SIZE, INPUT_SIZE)
 
 # set_layout enables using ov.set_batch() during inference to easily change the batch size of the model in runtime
@@ -38,7 +47,6 @@ for param in model.model.get_parameters():
     param.set_layout(ov.Layout("N..."))
 
 # ### Convert tokenizer and add max padding
-hf_tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=args.trust_remote_code)
 hf_tokenizer.model_max_length = INPUT_SIZE
 ov_tokenizer = convert_tokenizer(hf_tokenizer, use_max_padding=True)
 

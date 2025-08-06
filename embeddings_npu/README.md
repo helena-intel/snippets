@@ -59,6 +59,8 @@ arguments. CPU, GPU and NPU are supported.
 python embedding.py ..\bge-small-en-ov-static-norm NPU
 ```
 
+For inference of embedding models optimized for best throughput, see [throughput_benchmark_embeddings.py](https://github.com/helena-intel/snippets/blob/main/non_genai_benchmark/python/throughput_benchmark_embeddings.py).
+
 ## Build C++ app and run inference
 
 In a terminal where you ran setupvars.bat or setupvars.ps1 from an extracted
