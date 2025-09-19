@@ -18,7 +18,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-MAX_IMAGE_SIZE = 256
+MAX_IMAGE_SIZE = 512
 base_url = "http://localhost:8000/v3"
 
 
@@ -72,6 +72,7 @@ class VLM:
                 }
             ],
             "max_completion_tokens": 512,
+            "temperature": 0
         }
         headers = {"Content-Type": "application/json", "Authorization": "not used"}
         start = time.perf_counter()
