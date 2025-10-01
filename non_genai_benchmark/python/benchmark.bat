@@ -19,7 +19,7 @@ REM curl -O https://raw.githubusercontent.com/helena-intel/snippets/refs/heads/m
 REM python show_compiled_model_properties.py %MODEL% >> %LOGTXT%
 
 REM run benchmark three times on all available devices
-for /L %%i in (1,1,1) do @python sync_benchmark.py %MODEL% ALL --log %LOGCSV%
+for /L %%i in (1,1,3) do @python sync_benchmark.py %MODEL% ALL --log %LOGCSV%
 
 REM create openvinologs.zip with .txt and .csv files
 powershell.exe -Command "if (Test-Path 'openvinologs.zip') { Remove-Item 'openvinologs.zip' }; Compress-Archive -Path *.csv, *.txt -DestinationPath 'openvinologs.zip'"
