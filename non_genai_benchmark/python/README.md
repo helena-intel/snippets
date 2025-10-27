@@ -20,6 +20,10 @@ Example files that demonstrate how to run inference in a loop and capture system
 - **`benchmark.bat`** - Windows batch script for automated benchmarking with system info logging
 - **`benchmark.sh`** - Linux/macOS bash script for automated benchmarking loops
 
+### Analysis Script
+
+- **`pivot_benchmark.py`** - Example script to show median performance per model/device
+
 ## Key Features
 
 - **Multiple inference modes**: Synchronous (latency-focused) and asynchronous (throughput-focused)
@@ -38,6 +42,7 @@ pip install openvino
 
 Additional requirements for specific scripts:
 - Embedding benchmark: `pip install openvino-tokenizers tokenizers datasets`
+- Pivot analysis: `pip install pandas`
 
 ## Usage Examples
 
@@ -47,7 +52,7 @@ Additional requirements for specific scripts:
 # Latency benchmark
 python sync_benchmark.py model.xml CPU --log results.csv
 
-# Throughput benchmark  
+# Throughput benchmark
 python throughput_benchmark.py model.xml GPU --log results.csv
 
 # Embedding model benchmark
@@ -60,7 +65,7 @@ python throughput_benchmark_embeddings.py model_dir NPU --dataset imdb --batch_s
 # Windows
 benchmark.bat model.xml logfile
 
-# Linux/macOS  
+# Linux/macOS
 source benchmark.sh
 ```
 
@@ -71,6 +76,22 @@ Show the five most time-consuming operations
 ```bash
 # View performance counters
 python sync_benchmark.py model.xml CPU --performance_counters
+```
+
+### Pivot analysis (median per model/device)
+
+Use `pivot_benchmark.py` to summarize CSV logs into a compact table of medians. The script expects columns `model`, `device`, and the metric column (default: `throughput`).
+
+```bash
+# Median throughput per model with devices as columns
+python pivot_benchmark.py logtest.csv
+
+# Filter to a single device and output a one-column table of medians
+python pivot_benchmark.py logtest.csv -d GPU.0
+
+# Filter models by substring and save the pivot to CSV
+python pivot_benchmark.py logtest.csv -m bge -c throughput -o pivot_out.csv
+```
 
 ## Output
 
