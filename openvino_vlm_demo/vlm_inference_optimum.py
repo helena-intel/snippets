@@ -1,3 +1,15 @@
+"""
+Example script to show VLM inference with OpenVINO using Optimum Intel.
+The script can be used standalone, or as part of the Gradio demo at
+https://github.com/helena-intel/snippets/tree/main/openvino_vlm_demo
+
+Images are resizes to MAX_IMAGE_SIZE before inference.
+
+Usage: python vlm_inference_optimum.py <image> --model <model_path> --device <CPU|GPU|NPU> [--prompt <text>]
+
+Requirements: `pip install optimum[openvino] torchvision`
+"""
+
 import time
 
 from optimum.intel import OVModelForVisualCausalLM
@@ -7,6 +19,7 @@ from transformers import AutoProcessor, logging
 logging.set_verbosity_error()
 
 MAX_IMAGE_SIZE = 512
+TRUST_REMOTE_CODE = False
 
 
 def resize_if_needed(image: Image.Image, max_size: int) -> Image.Image:
@@ -17,7 +30,12 @@ def resize_if_needed(image: Image.Image, max_size: int) -> Image.Image:
 
 
 def perf_metrics(num_tokens, duration):
-    tps = round(num_tokens / duration, 2)
+    """
+    Compute tokens/sec and ms/token. Returns (0, 0) when num_tokens == 0. If duration <= 0, TPS is 0.
+    """
+    if num_tokens == 0:
+        return 0, 0
+    tps = round(num_tokens / duration, 2) if duration > 0 else 0
     latency = round((duration / num_tokens) * 1000, 2)
     return tps, latency
 
@@ -26,9 +44,7 @@ class VLM:
     def __init__(self, model_path, device):
         self.model_path = model_path
         self.device = device
-        self.model = None
-        self.processor = None
-        self.trust_remote_code = False
+        self.trust_remote_code = TRUST_REMOTE_CODE
         self.load_model(self.device)
 
     def load_model(self, device):
@@ -38,13 +54,12 @@ class VLM:
         self.processor = AutoProcessor.from_pretrained(self.model_path, trust_remote_code=self.trust_remote_code)
 
     def prepare_inputs_image(self, image, question):
-        image = image.convert("RGB")
+        image = image.convert("RGB")  # transparency is not supported, this is very fast if image is already 3 channels
         image = resize_if_needed(image, max_size=MAX_IMAGE_SIZE)
         messages = [
-            #            {"role": "system", "content": [{"type": "text", "text": "You are friendly assistant."}]},
+            {"role": "system", "content": [{"type": "text", "text": "You are a helpful assistant"}]},
             {"role": "user", "content": [{"type": "text", "text": question}, {"type": "image", "image": image}]},
         ]
-
         inputs = self.processor.apply_chat_template(
             messages, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt"
         )
@@ -53,7 +68,7 @@ class VLM:
     def run_inference_image(self, image, question):
         inputs = self.prepare_inputs_image(image, question)
         start = time.perf_counter()
-        ov_output_ids = self.model.generate(
+        output_ids = self.model.generate(  # type: ignore
             **inputs,
             do_sample=False,
             max_new_tokens=512,
@@ -61,10 +76,10 @@ class VLM:
         )
         end = time.perf_counter()
         input_length = inputs["input_ids"].shape[-1]
-        ov_output_ids = ov_output_ids[0][input_length:]
-        output_num_tokens = ov_output_ids.shape[0]
+        output_ids = output_ids[0][input_length:]
+        output_num_tokens = output_ids.shape[0]
 
-        text_answer = self.processor.decode(ov_output_ids, skip_special_tokens=True)
+        text_answer = self.processor.decode(output_ids, skip_special_tokens=True)
         duration = end - start
         return text_answer, output_num_tokens, duration
 
@@ -76,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument("image", help="path to image")
     parser.add_argument("--model", help="path to OpenVINO VLM model directory")
     parser.add_argument("--device", choices=["GPU", "CPU", "NPU"], help="Inference device (GPU, CPU, NPU)")
+    parser.add_argument("--prompt", help="Prompt. Default: 'Describe this image'", default="Describe this image")
     args = parser.parse_args()
 
     print(f"Loading {args.model} to {args.device}")
@@ -85,7 +101,7 @@ if __name__ == "__main__":
     print(f"Model loading completed in {end-start:.2f} seconds")
 
     image = Image.open(args.image)
-    result_text, num_tokens, duration = vlm.run_inference_image(image, "Describe this image")
+    result_text, num_tokens, duration = vlm.run_inference_image(image, args.prompt)
     tps, latency = perf_metrics(num_tokens, duration)
     print(result_text)
     print(f"Duration: {duration:.2f} sec, throughput: {tps} tokens/sec, latency: {latency} ms/token")

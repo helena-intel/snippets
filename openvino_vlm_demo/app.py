@@ -8,17 +8,18 @@ import argparse
 
 import gradio as gr
 
-from vlm_inference_genai import VLM as VLM_GENAI
-from vlm_inference_optimum import VLM as VLM_OPTIMUM
-from vlm_inference_ovms import VLM as VLM_OVMS
-
 css = """
-.text textarea {font-size: 24px !important;}
+.text textarea {font-size: 22px !important;}
 """
 
 
 def perf_metrics(num_tokens, duration):
-    tps = round(num_tokens / duration, 2)
+    """
+    Compute tokens/sec and ms/token. Returns (0, 0) when num_tokens == 0. If duration <= 0, TPS is 0.
+    """
+    if num_tokens == 0:
+        return 0, 0
+    tps = round(num_tokens / duration, 2) if duration > 0 else 0
     latency = round((duration / num_tokens) * 1000, 2)
     return tps, latency
 
@@ -61,12 +62,14 @@ def launch_demo():
         process_button.click(process_inputs, inputs=[image_input, text_input], outputs=output_text)
         text_input.submit(process_inputs, inputs=[image_input, text_input], outputs=output_text)
         reset_button.click(reset_inputs, inputs=[], outputs=[image_input, text_input, output_text])
-        demo.launch(server_port=7790)
+        # server name 0.0.0.0 allows accessing this demo from a different computer on the same network
+        demo.launch(server_port=7790, server_name="0.0.0.0")
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="app.py", description="Gradio demo for VLMs with OpenVINO using Openvino GenAI, OVMS or Optimum Intel"
+        prog="app.py",
+        description="Gradio demo for VLMs with OpenVINO using Openvino GenAI, OVMS or Optimum Intel",
     )
     subparsers = parser.add_subparsers(dest="type", required=True, help="Mode to run")
 
@@ -75,6 +78,7 @@ def parse_args():
     p_genai.add_argument("device", help="Device to use ('CPU', 'GPU', 'NPU')")
 
     p_ovms = subparsers.add_parser("ovms", help="Run with OVMS (expects running OVMS server)")
+    p_ovms.add_argument("--ovms_port", "-p", type=int, default=8000, help="OVMS server port (default: 8000)")
 
     p_optimum = subparsers.add_parser("optimum", help="Run with OpenVINO's integration in transformers, Optimum Intel")
     p_optimum.add_argument("model_path", help="Path to the local model")
@@ -86,10 +90,17 @@ def parse_args():
 args = parse_args()
 
 if args.type == "genai":
+    from vlm_inference_genai import VLM as VLM_GENAI
+
     vlm = VLM_GENAI(args.model_path, args.device)
 elif args.type == "ovms":
-    vlm = VLM_OVMS()
+    from vlm_inference_ovms import VLM as VLM_OVMS
+
+    base_url = f"http://localhost:{args.ovms_port}/v3"
+    vlm = VLM_OVMS(base_url)
 elif args.type == "optimum":
+    from vlm_inference_optimum import VLM as VLM_OPTIMUM
+
     vlm = VLM_OPTIMUM(args.model_path, args.device)
 
 launch_demo()

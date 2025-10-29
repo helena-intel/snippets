@@ -57,29 +57,34 @@ take a while to compile the model. This will be faster on subsequent runs.
 Using OpenVINO GenAI:
 
 ```
-python app.py genai --model Qwen2.5-VL-3B-Instruct-ov-int4 --device GPU
+python app.py genai Qwen2.5-VL-3B-Instruct-ov-int4 GPU
 ```
 
 Using Optimum Intel:
 
 ```
-python app.py optimum --model Qwen2.5-VL-3B-Instruct-ov-int4 --device GPU
+python app.py optimum Qwen2.5-VL-3B-Instruct-ov-int4 GPU
 ```
 
 Using OVMS requires a running OVMS server. See documentation linked above.
 
 ```
-python app.py genai ovms
+python app.py ovms
 ```
 
+Or specify a custom port:
 
-The output from app.py will show `Running on local URL:  http://127.0.0.1:7790`. Click on this link to open the demo in your browser (or type in this URL manually).
+```
+python app.py ovms --ovms_port 9000
+```
+
+The output from app.py will show `Running on local URL:  http://0.0.0.0:7790`. Go to http://localhost:7790 in your browser (or type your IP address instead of localhost)
 
 ### Run inference in a script
 
 The inference scripts allow you to run inference on a particular image. Edit the script to modify the prompt. The script shows the model output and throughput/latency.
 
 ```
-python vlm_inference_genai.py --model  Qwen2.5-VL-3B-Instruct-ov-int4 --device GPU image.jpg
+python vlm_inference_genai.py image.jpg --model Qwen2.5-VL-3B-Instruct-ov-int4 --device GPU
 ```
 
