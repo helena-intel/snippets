@@ -29,7 +29,12 @@ def resize_if_needed(image: Image.Image, max_size: int) -> Image.Image:
 
 
 def perf_metrics(num_tokens, duration):
-    tps = round(num_tokens / duration, 2)
+    """
+    Compute tokens/sec and ms/token. Returns (0, 0) when num_tokens == 0. If duration <= 0, TPS is 0.
+    """
+    if num_tokens == 0:
+        return 0, 0
+    tps = round(num_tokens / duration, 2) if duration > 0 else 0
     latency = round((duration / num_tokens) * 1000, 2)
     return tps, latency
 
@@ -79,7 +84,6 @@ if __name__ == "__main__":
     print(f"Model loading completed in {end-start:.2f} seconds")
 
     image = Image.open(args.image)
-    result_text, num_tokens, duration = vlm.run_inference_image(image, args.prompt)
     result_text, num_tokens, duration = vlm.run_inference_image(image, args.prompt)
     tps, latency = perf_metrics(num_tokens, duration)
     print(result_text)
