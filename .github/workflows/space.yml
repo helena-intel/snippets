@@ -1,0 +1,25 @@
+name: Restart Hugging Face Space
+on:
+  schedule:
+    - cron: '0 5 * * *'   # daily at 05:00 UTC
+  workflow_dispatch: 
+
+jobs:
+  restart-space:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install huggingface_hub
+        run: pip install huggingface-hub
+
+      - name: Restart Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE_ID: helenai/check-optimum-intel-support   # replace with your space repo id
+        run: |
+          python - <<'PY'
+          from huggingface_hub import HfApi
+          import os
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          api.restart_space(repo_id=os.environ["SPACE_ID"])
+          print("Restart triggered for", os.environ["SPACE_ID"])
+          PY
