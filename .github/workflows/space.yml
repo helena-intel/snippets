@@ -1,25 +1,39 @@
-name: Restart Hugging Face Space
+name: Bump HF space requirements.txt to reinstall dependencies
+
 on:
   schedule:
-    - cron: '0 5 * * *'   # daily at 05:00 UTC
-  workflow_dispatch: 
+    - cron: '0 05 * * *'   # daily at 05:00 UTC — adjust
+  workflow_dispatch:
 
 jobs:
-  restart-space:
+  bump-and-restart:
     runs-on: ubuntu-latest
     steps:
-      - name: Install huggingface_hub
+      - name: Install deps
         run: pip install huggingface-hub
-
-      - name: Restart Space
+      - name: Update .timestamp in HF Space repo via API
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          SPACE_ID: helenai/check-optimum-intel-support   # replace with your space repo id
+          REPO_ID: helenai/check-optimum-intel-support
         run: |
           python - <<'PY'
-          from huggingface_hub import HfApi
+          import datetime
           import os
+          import tempfile
+          from huggingface_hub import HfApi, hf_hub_download
+          REPO_TYPE = "space"
+          REPO_ID = "helenai/check-optimum-intel-support"
           api = HfApi(token=os.environ["HF_TOKEN"])
-          api.restart_space(repo_id=os.environ["SPACE_ID"])
-          print("Restart triggered for", os.environ["SPACE_ID"])
+          local_path = hf_hub_download(repo_id=REPO_ID, repo_type=REPO_TYPE, filename="requirements.txt", token=os.environ["HF_TOKEN"])
+          with open(local_path, "r", encoding="utf-8") as f:
+              req_content = f.read()
+          lines = [line for line in req_content.splitlines() if not line.startswith("# bumped:")]
+          ts = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+          lines.append(f"# bumped: {ts}")
+          new_req = "\n".join(lines) + "\n"
+          with tempfile.NamedTemporaryFile("w+", delete=False, encoding="utf-8") as tmp:
+              tmp.write(new_req)
+              tmp_path = tmp.name
+          api.upload_file(path_or_fileobj=tmp_path, path_in_repo="requirements.txt", repo_id=REPO_ID, repo_type=REPO_TYPE)
+          print("Updated requirements.txt with timestamp:", ts)
           PY
