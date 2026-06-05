@@ -1,12 +1,12 @@
 """
-Quantize a BERT sequence classification model with static post training quantization.
+Quantize a BERT sequence classification model with static post training quantization, using optimum-intel. The model will be quantized using NNCF, and saved with static input shapes of (1,512). The script is intended as a simple example.
 
 Documentation:
 - optimum-intel quantization: https://huggingface.co/docs/optimum-intel/openvino/optimization#full-quantization
 - NNCF: https://docs.openvino.ai/2025/openvino-workflow/model-optimization-guide/quantizing-models-post-training.html
 
 Prerequisites:
-- `pip install optimum[openvino] datasets`
+- `pip install optimum-intel datasets`
 - a model directory with a PyTorch BERT classification model compatible with Hugging Face's AutoModel class
 
 Usage: `python __file__ /path/to/model_directory`

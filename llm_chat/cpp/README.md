@@ -1,5 +1,7 @@
 # OpenVINO C++ chat sample
 
+Interactive LLM chat sample using OpenVINO GenAI
+
 ## Prepare environment:
 
 Download and uncompress an [OpenVINO archive](https://storage.openvinotoolkit.org/repositories/openvino_genai/packages/).
@@ -35,8 +37,12 @@ cmake --build . --config Release
 Usage:
 
 ```
-llm_chat model_path device
+llm_chat /path/to/ov_model device
 ```
+
+- `path/to/ov_model` should point to a directory with an LLM in OpenVINO format. Convert your own model with [optimum-intel](https://huggingface.co/docs/optimum-intel/openvino/export) or download a model from Hugging Face Hub, for example from [OpenVINO's collection](https://huggingface.co/OpenVINO) or [LLMWare's Model Depot](https://huggingface.co/collections/llmware/model-depot).
+- `device` should be a supported device on your system. `CPU` should usually work, on Intel AI PCs you can use `GPU` and `NPU` too.
+
 
 ### Windows example:
 

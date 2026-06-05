@@ -14,6 +14,9 @@ For models with different filenames, specify the full path to the model xml file
 
 Optional: specify a list of devices, or an OpenVINO config as .json
 
+Note: Error checking is omitted for simplicity. For models that are not supported on NPU,
+errors will be shown in the output. Limit output to CPU/GPU to exclude NPU from the output.
+
 Example:
 python show_compiled_model_properties.py model.xml CPU GPU --config config.json
 """
@@ -53,14 +56,14 @@ core = ov.Core()
 
 devices = args.devices if args.devices else [*core.available_devices, "AUTO"]
 
-ov_config = None
+ov_config = {}
 if args.config is not None:
     config = Path(args.config)
     if not (config.suffix == ".json" and config.is_file()):
         raise ValueError("config should point to a .json file containing an OpenVINO config.")
     with open(config) as f:
-        ov_config = json.load(f)
-
+        ov_config.update(json.load(f))
+    print(f"Model compiled with OpenVINO config: {ov_config}")
 
 for device in devices:
     print(f"===== {device} SUPPORTED_PROPERTIES =====")
@@ -75,7 +78,11 @@ for device in devices:
                 rorw = "--- error getting property ---"
             print(f"{prop} ({rorw}): {value}")
     print()
-
+    if device == "NPU":
+        # This config is not needed with OpenVINO GenAI, but required to compile LLMs to NPU with plain OpenVINO
+        # The check for beam_idx is pragmatic, not intended to be perfect
+        if "beam_idx" in core.read_model(ov_model_path).inputs[-1].get_names():
+            ov_config.update({"NPU_USE_NPUW": "YES", "NPUW_LLM": "YES"})
     model = core.compile_model(ov_model_path, device_name=device, config=ov_config)
     print(f"----- {ov_model_path} {device} properties -----")
 
@@ -95,6 +102,4 @@ except Exception:
     raise
     openvino_version = ov.__version__
 
-if args.config is not None:
-    print(f"Model compiled with OpenVINO config: {ov_config}")
 print(f"OpenVINO version: {openvino_version}")

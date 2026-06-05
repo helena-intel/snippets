@@ -1,0 +1,284 @@
+# Show Properties
+
+Display OpenVINO device and compiled model properties.
+
+## Scripts
+
+- **`show_device_properties.py`** — Show supported properties for all available devices (or specific devices).
+- **`show_compiled_model_properties.py`** — Show both device properties and compiled model properties, with optional OpenVINO config.
+
+## Requirements
+
+```
+pip install openvino
+```
+
+## Usage
+
+```
+python show_device_properties.py [devices ...]
+python show_compiled_model_properties.py /path/to/model_xml_or_dir [devices ...] [--config CONFIG]
+```
+
+For `show_compiled_model_properties.py`, `model_xml_or_dir` can point to a directory if the directory contains `openvino_model.xml`. Otherwise, point to the full path of the model's .xml file. The config file should be a valid .json file containing an OpenVINO config.
+
+This is a sample script, error checking has been omitted for simplicity. In particular:
+- If you provide an OpenVINO config, limit to devices that support that config
+- On systems with an NPU, models that are not supported on NPU will have errors in the output. Limit to CPU/GPU to prevent trying to compile the model on NPU.
+
+### Examples
+
+```bash
+# Device properties
+python show_device_properties.py
+python show_device_properties.py CPU GPU
+
+# Compiled model properties
+python show_compiled_model_properties.py /path/to/model.xml
+python show_compiled_model_properties.py /path/to/model_dir GPU --config config.json
+```
+
+Example OpenVINO config file contents:
+
+```
+{"CACHE_DIR": "model_cache"}
+```
+
+## Sample Output
+
+This is the output of `show_compiled_model_properties.py` for all devices on an Intel(R) Core(TM) Ultra 7 258V (Lunar Lake) NUC,
+using [Llama-3.2-1B-Instruct OpenVINO model](https://huggingface.co/llmware/llama-3.2-1b-instruct-npu-ov) from [LLMWare's awesome Model Depot](https://huggingface.co/collections/llmware/model-depot). The output of `show_device_properties.py` is the same as "SUPPORTED PROPERTIES" from this output, for each device.
+
+```
+===== CPU SUPPORTED_PROPERTIES =====
+AVAILABLE_DEVICES (RO): ['']
+CPU_DENORMALS_OPTIMIZATION (RW): False
+CPU_SPARSE_WEIGHTS_DECOMPRESSION_RATE (RW): 1.0
+DEVICE_ARCHITECTURE (RO): intel64
+DEVICE_ID (RW): 
+DEVICE_TYPE (RO): Type.INTEGRATED
+DYNAMIC_QUANTIZATION_GROUP_SIZE (RW): 32
+ENABLE_CPU_PINNING (RW): True
+ENABLE_CPU_RESERVATION (RW): False
+ENABLE_HYPER_THREADING (RW): True
+ENABLE_TENSOR_PARALLEL (RW): False
+ENABLE_WEIGHTLESS (RW): False
+EXECUTION_DEVICES (RO): ['CPU']
+EXECUTION_MODE_HINT (RW): ExecutionMode.PERFORMANCE
+FULL_DEVICE_NAME (RO): Intel(R) Core(TM) Ultra 7 258V
+INFERENCE_NUM_THREADS (RW): 0
+INFERENCE_PRECISION_HINT (RW): <Type: 'float32'>
+KEY_CACHE_GROUP_SIZE (RW): 0
+KEY_CACHE_PRECISION (RW): <Type: 'uint8_t'>
+KV_CACHE_PRECISION (RW): <Type: 'uint8_t'>
+LOG_LEVEL (RW): Level.NO
+MODEL_DISTRIBUTION_POLICY (RW): set()
+NUM_STREAMS (RW): 1
+OPTIMIZATION_CAPABILITIES (RO): ['BF16', 'FP32', 'FP16', 'INT8', 'BIN', 'EXPORT_IMPORT']
+PERFORMANCE_HINT (RW): PerformanceMode.LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS (RW): 0
+PERF_COUNT (RW): False
+RANGE_FOR_ASYNC_INFER_REQUESTS (RO): (1, 1, 1)
+RANGE_FOR_STREAMS (RO): (1, 8)
+SCHEDULING_CORE_TYPE (RW): SchedulingCoreType.ANY_CORE
+TBB_PARTITIONER (RW): TbbPartitioner.???
+VALUE_CACHE_GROUP_SIZE (RW): 0
+VALUE_CACHE_PRECISION (RW): <Type: 'uint8_t'>
+WEIGHTS_PATH (WO): 
+
+----- llmware\llama-3.2-1b-instruct-npu-ov\openvino_model.xml CPU properties -----
+CPU_DENORMALS_OPTIMIZATION: False
+CPU_SPARSE_WEIGHTS_DECOMPRESSION_RATE: 1.0
+DYNAMIC_QUANTIZATION_GROUP_SIZE: 32
+ENABLE_CPU_PINNING: False
+ENABLE_CPU_RESERVATION: False
+ENABLE_HYPER_THREADING: False
+ENABLE_TENSOR_PARALLEL: False
+EXECUTION_DEVICES: ['CPU']
+EXECUTION_MODE_HINT: ExecutionMode.PERFORMANCE
+INFERENCE_NUM_THREADS: 4
+INFERENCE_PRECISION_HINT: <Type: 'float32'>
+KEY_CACHE_GROUP_SIZE: 0
+KEY_CACHE_PRECISION: <Type: 'uint8_t'>
+KV_CACHE_PRECISION: <Type: 'uint8_t'>
+LOG_LEVEL: Level.NO
+MODEL_DISTRIBUTION_POLICY: set()
+NETWORK_NAME: Model0
+NUM_STREAMS: 1
+OPTIMAL_NUMBER_OF_INFER_REQUESTS: 1
+PERFORMANCE_HINT: LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS: 0
+PERF_COUNT: NO
+SCHEDULING_CORE_TYPE: SchedulingCoreType.ANY_CORE
+TBB_PARTITIONER: TbbPartitioner.STATIC
+VALUE_CACHE_GROUP_SIZE: 0
+VALUE_CACHE_PRECISION: <Type: 'uint8_t'>
+
+===== GPU SUPPORTED_PROPERTIES =====
+ACTIVATIONS_SCALE_FACTOR (RW): -1.0
+AVAILABLE_DEVICES (RO): ['0']
+CACHE_DIR (RW): 
+CACHE_ENCRYPTION_CALLBACKS (--- error getting property ---): 
+CACHE_MODE (RW): CacheMode.OPTIMIZE_SPEED
+COMPILATION_NUM_THREADS (RW): 8
+CONFIG_FILE (RW): 
+DEVICE_ARCHITECTURE (RO): GPU: vendor=0x8086 arch=v20.4.4
+DEVICE_GOPS (RO): {<Type: 'float16'>: 31948.80078125, <Type: 'float32'>: 3993.60009765625, <Type: 'int8_t'>: 63897.6015625, <Type: 'uint8_t'>: 63897.6015625}
+DEVICE_ID (RW): 0
+DEVICE_LUID (RO): b2ff000000000000
+DEVICE_PCI_INFO (RO): {domain: 0 bus: 0 device: 0x2 function: 0}
+DEVICE_TYPE (RO): Type.INTEGRATED
+DEVICE_UUID (RO): 8680a064040000000002000000000000
+DYNAMIC_QUANTIZATION_GROUP_SIZE (RW): 0
+ENABLE_CPU_PINNING (RW): False
+ENABLE_CPU_RESERVATION (RW): False
+EXECUTION_MODE_HINT (RW): ExecutionMode.PERFORMANCE
+FULL_DEVICE_NAME (RO): Intel(R) Arc(TM) 140V GPU (16GB) (iGPU)
+GPU_DEVICE_ID (RO): 0x64a0
+GPU_DEVICE_MAX_ALLOC_MEM_SIZE (RO): 17646387200
+GPU_DEVICE_TOTAL_MEM_SIZE (RO): 17646387200
+GPU_DISABLE_WINOGRAD_CONVOLUTION (RW): False
+GPU_ENABLE_LARGE_ALLOCATIONS (RW): False
+GPU_ENABLE_LOOP_UNROLLING (RW): True
+GPU_ENABLE_LORA_OPERATION (RW): True
+GPU_ENABLE_SDPA_OPTIMIZATION (RW): True
+GPU_EXECUTION_UNITS_COUNT (RO): 64
+GPU_HOST_TASK_PRIORITY (RW): Priority.MEDIUM
+GPU_MEMORY_STATISTICS (RO): {'cl_mem': 0, 'unknown': 0, 'usm_device': 0, 'usm_host': 0, 'usm_shared': 0}
+GPU_QUEUE_PRIORITY (RW): Priority.MEDIUM
+GPU_QUEUE_THROTTLE (RW): Priority.MEDIUM
+GPU_UARCH_VERSION (RO): 20.4.4
+INFERENCE_PRECISION_HINT (RW): <Type: 'float16'>
+KV_CACHE_PRECISION (RW): <Type: 'dynamic'>
+MAX_BATCH_SIZE (RO): 1
+MODEL_PRIORITY (RW): Priority.MEDIUM
+MODEL_PTR (WO): None
+NUM_STREAMS (RW): 1
+OPTIMAL_BATCH_SIZE (RO): 1
+OPTIMIZATION_CAPABILITIES (RO): ['FP32', 'BIN', 'FP16', 'INT8', 'GPU_HW_MATMUL', 'GPU_USM_MEMORY', 'EXPORT_IMPORT']
+PERFORMANCE_HINT (RW): PerformanceMode.LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS (RW): 0
+PERF_COUNT (RW): False
+RANGE_FOR_ASYNC_INFER_REQUESTS (RO): (1, 2, 1)
+RANGE_FOR_STREAMS (RO): (1, 2)
+WEIGHTS_PATH (RW): 
+
+----- llmware\llama-3.2-1b-instruct-npu-ov\openvino_model.xml GPU properties -----
+ACTIVATIONS_SCALE_FACTOR: -1.0
+CACHE_DIR: 
+CACHE_MODE: CacheMode.OPTIMIZE_SPEED
+COMPILATION_NUM_THREADS: 8
+DEVICE_ID: 0
+DYNAMIC_QUANTIZATION_GROUP_SIZE: 18446744073709551615
+ENABLE_CPU_PINNING: False
+ENABLE_CPU_RESERVATION: False
+EXECUTION_DEVICES: ['GPU.0']
+EXECUTION_MODE_HINT: ExecutionMode.PERFORMANCE
+GPU_DISABLE_WINOGRAD_CONVOLUTION: False
+GPU_ENABLE_LARGE_ALLOCATIONS: False
+GPU_ENABLE_LOOP_UNROLLING: True
+GPU_HOST_TASK_PRIORITY: Priority.MEDIUM
+GPU_QUEUE_PRIORITY: Priority.MEDIUM
+GPU_QUEUE_THROTTLE: Priority.MEDIUM
+INFERENCE_PRECISION_HINT: <Type: 'float16'>
+KV_CACHE_PRECISION: <Type: 'float16'>
+MODEL_PRIORITY: Priority.MEDIUM
+NETWORK_NAME: Model0
+NUM_STREAMS: 1
+OPTIMAL_NUMBER_OF_INFER_REQUESTS: 1
+PERFORMANCE_HINT: PerformanceMode.LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS: 0
+PERF_COUNT: False
+
+===== NPU SUPPORTED_PROPERTIES =====
+AVAILABLE_DEVICES (RO): ['4000']
+CACHE_DIR (RW): 
+CACHE_ENCRYPTION_CALLBACKS (WO): None
+CACHE_MODE (RW): CacheMode.OPTIMIZE_SPEED
+COMPATIBILITY_CHECK (--- error getting property ---): CacheMode.OPTIMIZE_SPEED
+COMPILATION_NUM_THREADS (RW): 8
+DEVICE_ARCHITECTURE (RO): 4000
+DEVICE_GOPS (RO): {<Type: 'bfloat16'>: 0.0, <Type: 'float16'>: 23347.19921875, <Type: 'float32'>: 0.0, <Type: 'int8_t'>: 46694.3984375, <Type: 'uint8_t'>: 46694.3984375}
+DEVICE_ID (RW): 
+DEVICE_LUID (RO): f303010000000000
+DEVICE_PCI_INFO (RO): {domain: 0 bus: 0 device: 0xb function: 0}
+DEVICE_TYPE (RO): Type.INTEGRATED
+DEVICE_UUID (RO): 80d1d11eb73811eab3de0242ac130004
+ENABLE_CPU_PINNING (RW): False
+EXECUTION_DEVICES (RO): NPU
+EXECUTION_MODE_HINT (RW): ExecutionMode.PERFORMANCE
+FULL_DEVICE_NAME (RO): Intel(R) AI Boost
+INFERENCE_PRECISION_HINT (RW): <Type: 'float16'>
+LOG_LEVEL (RW): Level.ERR
+MODEL_PRIORITY (RW): Priority.MEDIUM
+MODEL_PTR (RO): None
+NPU_BYPASS_UMD_CACHING (RW): False
+NPU_COMPILATION_MODE_PARAMS (RW): 
+NPU_COMPILER_DYNAMIC_QUANTIZATION (RW): False
+NPU_COMPILER_TYPE (RW): CompilerType.PREFER_PLUGIN
+NPU_COMPILER_VERSION (RO): 524289
+NPU_DEFER_WEIGHTS_LOAD (RW): False
+NPU_DEVICE_ALLOC_MEM_SIZE (RO): 0
+NPU_DEVICE_TOTAL_MEM_SIZE (RO): 17179869184
+NPU_DISABLE_IDLE_MEMORY_PRUNING (RW): False
+NPU_DRIVER_VERSION (RO): 1004778
+NPU_ENABLE_STRIDES_FOR (RW): 
+NPU_MAX_TILES (RO): 6
+NPU_PLATFORM (RW): AUTO_DETECT
+NPU_QDQ_OPTIMIZATION (RW): False
+NPU_QDQ_OPTIMIZATION_AGGRESSIVE (RW): False
+NPU_RUN_INFERENCES_SEQUENTIALLY (RW): False
+NPU_TILES (RW): -1
+NPU_TURBO (RW): False
+NUM_STREAMS (RO): 1
+OPTIMAL_NUMBER_OF_INFER_REQUESTS (RO): 1
+OPTIMIZATION_CAPABILITIES (RO): ['FP16', 'INT8', 'EXPORT_IMPORT']
+PERFORMANCE_HINT (RW): PerformanceMode.LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS (RW): 1
+PERF_COUNT (RW): False
+RANGE_FOR_ASYNC_INFER_REQUESTS (RO): (1, 10, 1)
+RANGE_FOR_STREAMS (RO): (1, 4)
+WEIGHTS_PATH (RW): 
+WORKLOAD_TYPE (RW): WorkloadType.DEFAULT
+
+----- llmware\llama-3.2-1b-instruct-npu-ov\openvino_model.xml NPU properties -----
+DEVICE_ID: 
+ENABLE_CPU_PINNING: False
+EXECUTION_DEVICES: NPU
+EXECUTION_MODE_HINT: ExecutionMode.PERFORMANCE
+INFERENCE_PRECISION_HINT: <Type: 'float16'>
+LOADED_FROM_CACHE: False
+MODEL_PRIORITY: Priority.MEDIUM
+NETWORK_NAME: Model0_prefill
+OPTIMAL_NUMBER_OF_INFER_REQUESTS: 1
+PERFORMANCE_HINT: PerformanceMode.LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS: 1
+PERF_COUNT: False
+
+===== AUTO SUPPORTED_PROPERTIES =====
+DEVICE_BIND_BUFFER (RW): False
+ENABLE_RUNTIME_FALLBACK (RW): True
+ENABLE_STARTUP_FALLBACK (RW): True
+EXECUTION_MODE_HINT (RW): ExecutionMode.PERFORMANCE
+FULL_DEVICE_NAME (RO): AUTO
+LOG_LEVEL (RW): Level.NO
+MODEL_PRIORITY (RW): Priority.MEDIUM
+MULTI_DEVICE_PRIORITIES (RW): 
+OPTIMIZATION_CAPABILITIES (RO): ['BF16', 'BIN', 'FP16', 'FP32', 'GPU_HW_MATMUL', 'GPU_USM_MEMORY', 'INT8']
+PERFORMANCE_HINT (RW): PerformanceMode.LATENCY
+PERFORMANCE_HINT_NUM_REQUESTS (RW): 0
+PERF_COUNT (RW): False
+SCHEDULE_POLICY (RW): SchedulePolicy.DEVICE_PRIORITY
+
+----- llmware\llama-3.2-1b-instruct-npu-ov\openvino_model.xml AUTO properties -----
+EXECUTION_DEVICES: ['(CPU)']
+LOADED_FROM_CACHE: False
+MODEL_PRIORITY: Priority.MEDIUM
+MULTI_DEVICE_PRIORITIES: GPU.0,CPU
+NETWORK_NAME: Model0
+OPTIMAL_NUMBER_OF_INFER_REQUESTS: 1
+PERFORMANCE_HINT: PerformanceMode.LATENCY
+PERF_COUNT: False
+
+OpenVINO version: 2026.2.0
+```
